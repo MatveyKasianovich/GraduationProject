@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0002-create-locations-table
+      author: course-team
+      changes:
+        - createTable:
+            tableName: locations
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: address
+                  type: VARCHAR(255)
+              - column:
+                  name: capacity
+                  type: INTEGER
+              - column:
+                  name: description
+                  type: TEXT
