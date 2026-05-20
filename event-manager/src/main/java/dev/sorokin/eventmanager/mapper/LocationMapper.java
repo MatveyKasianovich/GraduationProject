@@ -7,10 +7,10 @@ import dev.sorokin.eventmanager.service.Location;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Mapper {
+public class LocationMapper {
 
     public Location toLocationFromDto(LocationDTO locationDTO){
-        return new Location(locationDTO.getId(),locationDTO.getName(), locationDTO.getAddress(), locationDTO.getCapacity(), locationDTO.getDescription());
+        return new Location(locationDTO.id(),locationDTO.name(), locationDTO.address(), locationDTO.capacity(), locationDTO.description());
     }
 
     public LocationDTO toLocationDtoFromLocation(Location  location){

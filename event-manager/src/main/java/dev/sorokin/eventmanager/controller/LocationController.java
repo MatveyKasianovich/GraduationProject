@@ -2,7 +2,8 @@ package dev.sorokin.eventmanager.controller;
 
 
 import dev.sorokin.eventmanager.dto.LocationDTO;
-import dev.sorokin.eventmanager.mapper.Mapper;
+import dev.sorokin.eventmanager.mapper.LocationMapper;
+import dev.sorokin.eventmanager.mapper.LocationMapper;
 import dev.sorokin.eventmanager.service.Location;
 import dev.sorokin.eventmanager.service.LocationService;
 import jakarta.validation.Valid;
@@ -19,10 +20,10 @@ import java.util.stream.Collectors;
 public class LocationController {
 
 
-    private final Mapper mapper;
+    private final LocationMapper mapper;
     private final LocationService locationService;
 
-    public LocationController(Mapper mapper, LocationService locationService) {
+    public LocationController(LocationMapper mapper, LocationService locationService) {
         this.mapper = mapper;
         this.locationService = locationService;
     }
@@ -35,6 +36,13 @@ public class LocationController {
                     .map(it->mapper.toLocationDtoFromLocation(it))
                     .collect(Collectors.toList()));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<LocationDTO> updateLocation(@RequestBody @Valid LocationDTO locationDTO, @PathVariable Long id){
+        Location locationToUpdate=mapper.toLocationFromDto(locationDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(mapper.toLocationDtoFromLocation(locationService.updateLocation(locationToUpdate,id)));
+    }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<LocationDTO> getLocationById(@PathVariable Long id){

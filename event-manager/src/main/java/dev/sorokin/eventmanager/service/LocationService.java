@@ -2,8 +2,11 @@ package dev.sorokin.eventmanager.service;
 
 
 import dev.sorokin.eventmanager.dto.LocationDTO;
+import dev.sorokin.eventmanager.entity.LocationEntity;
 import dev.sorokin.eventmanager.entity.LocationRepository;
-import dev.sorokin.eventmanager.mapper.Mapper;
+import dev.sorokin.eventmanager.mapper.LocationMapper;
+import dev.sorokin.eventmanager.mapper.LocationMapper;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -16,10 +19,10 @@ import java.util.stream.Collectors;
 @Transactional
 public class LocationService {
 
-    private final Mapper mapper;
+    private final LocationMapper mapper;
     private final LocationRepository locationRepository;
 
-    public LocationService(Mapper mapper, LocationRepository locationRepository) {
+    public LocationService(LocationMapper mapper, LocationRepository locationRepository) {
         this.mapper = mapper;
         this.locationRepository = locationRepository;
     }
@@ -27,15 +30,32 @@ public class LocationService {
 
     public List<Location> getAllLocations() {
         return locationRepository.findAll().stream()
-                .map(it->mapper.toLocationFromEntity(it))
+                .map(mapper::toLocationFromEntity)
                 .collect(Collectors.toList());
     }
 
     public Location getLocationById(Long id) {
         if(!locationRepository.existsById(id)){
-            throw new NoSuchElementException("No entity with id=%s".formatted(id));
+            throw new EntityNotFoundException("No entity with id=%s".formatted(id));
         }
         return mapper.toLocationFromEntity(locationRepository.getReferenceById(id));
+    }
+
+    @Transactional
+    public Location updateLocation(Location locationToUpdate, Long id) {
+        if (!locationRepository.existsById(id)) {
+            throw new EntityNotFoundException("No entity with id=%s".formatted(id));
+        }
+
+        LocationEntity updatedEntity = new LocationEntity(
+                id,
+                locationToUpdate.getName(),
+                locationToUpdate.getAddress(),
+                locationToUpdate.getCapacity(),
+                locationToUpdate.getDescription()
+        );
+
+        return mapper.toLocationFromEntity(locationRepository.save(updatedEntity));
     }
 
     @Transactional
@@ -47,7 +67,7 @@ public class LocationService {
     @Transactional
     public void deleteLocationById(Long id) {
         if(!locationRepository.existsById(id)){
-            throw new NoSuchElementException("No entity with id=%s".formatted(id));
+            throw new EntityNotFoundException("No entity with id=%s".formatted(id));
         }
         locationRepository.deleteLocationEntitiesById(id);
     }

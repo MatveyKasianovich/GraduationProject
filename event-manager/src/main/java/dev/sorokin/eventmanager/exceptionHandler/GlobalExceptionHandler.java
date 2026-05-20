@@ -3,6 +3,7 @@ package dev.sorokin.eventmanager.exceptionHandler;
 
 import dev.sorokin.eventmanager.controller.LocationController;
 import dev.sorokin.eventmanager.dto.ErrorMessageResponse;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -40,8 +41,8 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<ErrorMessageResponse> handleNotValidArgument(NoSuchElementException e) {
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorMessageResponse> handleNotValidArgument(EntityNotFoundException e) {
         log.error("Got NoSuchElementexception", e);
 
         ErrorMessageResponse errorDto =  new ErrorMessageResponse(
