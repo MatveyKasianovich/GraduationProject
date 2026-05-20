@@ -3,6 +3,7 @@ package dev.sorokin.eventmanager.controller;
 
 import dev.sorokin.eventmanager.dto.LocationDTO;
 import dev.sorokin.eventmanager.mapper.Mapper;
+import dev.sorokin.eventmanager.service.Location;
 import dev.sorokin.eventmanager.service.LocationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -42,7 +43,7 @@ public class LocationController {
 
     @PostMapping
     public ResponseEntity<LocationDTO> createLocation(@RequestBody @Valid LocationDTO locationDTO){
-        var locationToCreate=mapper.toLocationFromDto(locationDTO);
+        Location locationToCreate=mapper.toLocationFromDto(locationDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toLocationDtoFromLocation(locationService.createLocation(locationToCreate)));
     }
 
