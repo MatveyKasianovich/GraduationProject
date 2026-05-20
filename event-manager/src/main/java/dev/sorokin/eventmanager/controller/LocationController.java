@@ -33,7 +33,7 @@ public class LocationController {
     public ResponseEntity<List<LocationDTO>> getAllLocations(){
         return ResponseEntity.status(HttpStatus.OK).body(
                 locationService.getAllLocations().stream()
-                    .map(it->mapper.toLocationDtoFromLocation(it))
+                    .map(mapper::toLocationDtoFromLocation)
                     .collect(Collectors.toList()));
     }
 
