@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0003-create-users-table
+      author: course-team
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_login
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: user_password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_role
+                  type: VARCHAR(50)
+              - column:
+                  name: user_age
+                  type: INTEGER
+                  constraints:
+                    nullable: false

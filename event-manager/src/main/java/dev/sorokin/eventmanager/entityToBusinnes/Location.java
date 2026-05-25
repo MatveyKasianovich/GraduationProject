@@ -1,8 +1,4 @@
-package dev.sorokin.eventmanager.service;
-
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+package dev.sorokin.eventmanager.entityToBusinnes;
 
 public class Location {
 
