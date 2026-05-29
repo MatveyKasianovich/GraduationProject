@@ -1,4 +1,4 @@
-package dev.sorokin.eventmanager.controller;
+package dev.sorokin.eventmanager.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
