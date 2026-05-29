@@ -3,7 +3,7 @@ package dev.sorokin.eventmanager.mapper;
 
 import dev.sorokin.eventmanager.dto.LocationDTO;
 import dev.sorokin.eventmanager.entity.LocationEntity;
-import dev.sorokin.eventmanager.service.Location;
+import dev.sorokin.eventmanager.entityToBusinnes.Location;
 import org.springframework.stereotype.Component;
 
 @Component
