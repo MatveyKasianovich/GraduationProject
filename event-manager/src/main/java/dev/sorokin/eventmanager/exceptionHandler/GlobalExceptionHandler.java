@@ -56,5 +56,20 @@ public class GlobalExceptionHandler {
                 .body(errorDto);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorMessageResponse> handleNotValidArgument(IllegalArgumentException e) {
+        log.error("Got IllegalArgumentException", e);
+
+        ErrorMessageResponse errorDto =  new ErrorMessageResponse(
+                "обнаружены неверные данные во время обработки на сервере",
+                e.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(errorDto);
+    }
+
 
 }

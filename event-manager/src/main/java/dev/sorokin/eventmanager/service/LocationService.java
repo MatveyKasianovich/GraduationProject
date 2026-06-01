@@ -1,18 +1,15 @@
 package dev.sorokin.eventmanager.service;
 
 
-import dev.sorokin.eventmanager.dto.LocationDTO;
 import dev.sorokin.eventmanager.entity.LocationEntity;
 import dev.sorokin.eventmanager.entity.LocationRepository;
-import dev.sorokin.eventmanager.mapper.LocationMapper;
+import dev.sorokin.eventmanager.entityToBusinnes.Location;
 import dev.sorokin.eventmanager.mapper.LocationMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service

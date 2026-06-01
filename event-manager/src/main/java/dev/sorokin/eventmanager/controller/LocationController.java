@@ -3,8 +3,7 @@ package dev.sorokin.eventmanager.controller;
 
 import dev.sorokin.eventmanager.dto.LocationDTO;
 import dev.sorokin.eventmanager.mapper.LocationMapper;
-import dev.sorokin.eventmanager.mapper.LocationMapper;
-import dev.sorokin.eventmanager.service.Location;
+import dev.sorokin.eventmanager.entityToBusinnes.Location;
 import dev.sorokin.eventmanager.service.LocationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -12,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
