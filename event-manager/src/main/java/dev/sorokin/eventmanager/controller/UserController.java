@@ -37,7 +37,7 @@ public class UserController {
     public ResponseEntity<UserDTO> registerUser(@RequestBody SignUpRequest signUpRequest){
         log.info("Get request for sign-u,login=%s".formatted(signUpRequest.login()));
         User user=userService.registerUser(signUpRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new UserDTO(user.getId(),user.getLogin(),user.getAge(),user.getRole()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userMapper.toUserDtoFromUser(user));
     }
 
     @PostMapping("/auth")

@@ -5,3 +5,7 @@ databaseChangeLog:
       file: db/changelog/changesets/0002-create-locations-table.yaml
   - include:
       file: db/changelog/changesets/0003-create-users-table.yaml
+  - include:
+      file: db/changelog/changesets/0004-create-event-table.yaml
+  - include:
+      file: db/changelog/changesets/0005-create-registration-table.yaml
