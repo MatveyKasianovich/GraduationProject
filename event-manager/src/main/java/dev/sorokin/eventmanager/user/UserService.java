@@ -1,11 +1,7 @@
-package dev.sorokin.eventmanager.service;
+package dev.sorokin.eventmanager.user;
 
 
-import dev.sorokin.eventmanager.data.Role;
 import dev.sorokin.eventmanager.dto.SignUpRequest;
-import dev.sorokin.eventmanager.entity.UserEntity;
-import dev.sorokin.eventmanager.entity.UserRepository;
-import dev.sorokin.eventmanager.entityToBusinnes.User;
 import dev.sorokin.eventmanager.mapper.UserMapper;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;

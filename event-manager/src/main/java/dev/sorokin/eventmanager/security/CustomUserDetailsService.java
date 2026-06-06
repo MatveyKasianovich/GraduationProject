@@ -1,7 +1,7 @@
 package dev.sorokin.eventmanager.security;
 
-import dev.sorokin.eventmanager.entity.UserEntity;
-import dev.sorokin.eventmanager.entity.UserRepository;
+import dev.sorokin.eventmanager.user.UserEntity;
+import dev.sorokin.eventmanager.user.UserRepository;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

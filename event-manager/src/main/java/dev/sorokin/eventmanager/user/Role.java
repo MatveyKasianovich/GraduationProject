@@ -1,4 +1,4 @@
-package dev.sorokin.eventmanager.data;
+package dev.sorokin.eventmanager.user;
 
 public enum Role {
     ADMIN,

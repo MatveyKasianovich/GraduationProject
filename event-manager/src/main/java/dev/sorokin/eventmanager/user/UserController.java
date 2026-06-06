@@ -1,16 +1,13 @@
-package dev.sorokin.eventmanager.controller;
+package dev.sorokin.eventmanager.user;
 
 
 import dev.sorokin.eventmanager.dto.SignUpRequest;
 import dev.sorokin.eventmanager.dto.UserDTO;
 
-import dev.sorokin.eventmanager.entityToBusinnes.User;
-
 import dev.sorokin.eventmanager.mapper.UserMapper;
 import dev.sorokin.eventmanager.security.JwtAuthenticationService;
 import dev.sorokin.eventmanager.security.JwtTokenResponse;
 import dev.sorokin.eventmanager.security.SignInRequest;
-import dev.sorokin.eventmanager.service.UserService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -32,6 +32,10 @@ public class EventResponseDTO {
         this.status = status;
     }
 
+    public EventResponseDTO() {
+    }
+
+
 
     public Long getId() {
         return id;

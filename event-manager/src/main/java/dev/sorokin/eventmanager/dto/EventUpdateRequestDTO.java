@@ -1,5 +1,6 @@
 package dev.sorokin.eventmanager.dto;
 
+import dev.sorokin.eventmanager.event.EventStatus;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -22,19 +23,29 @@ public class EventUpdateRequestDTO {
     private Integer maxPlaces;
 
     @NotNull
-    private Integer locationId;
+    private Long locationId;
 
     @NotBlank
     private String name;
 
 
-    public EventUpdateRequestDTO(LocalDateTime startAt, Integer durationMinutes,Integer cost, Integer maxPlaces, Integer locationId, String name) {
+
+
+    public EventUpdateRequestDTO(LocalDateTime startAt, Integer durationMinutes, Integer cost, Integer maxPlaces, Long locationId, String name) {
         this.startAt = startAt;
         this.durationMinutes = durationMinutes;
         this.cost=cost;
         this.maxPlaces = maxPlaces;
         this.locationId = locationId;
         this.name = name;
+    }
+
+    public Integer getCost() {
+        return cost;
+    }
+
+    public void setCost(Integer cost) {
+        this.cost = cost;
     }
 
     public LocalDateTime getStartAt() {
@@ -61,11 +72,11 @@ public class EventUpdateRequestDTO {
         this.maxPlaces = maxPlaces;
     }
 
-    public Integer getLocationId() {
+    public Long getLocationId() {
         return locationId;
     }
 
-    public void setLocationId(Integer locationId) {
+    public void setLocationId(Long locationId) {
         this.locationId = locationId;
     }
 

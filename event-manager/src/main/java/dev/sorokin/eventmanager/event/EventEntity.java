@@ -1,5 +1,6 @@
-package dev.sorokin.eventmanager.entity;
+package dev.sorokin.eventmanager.event;
 
+import dev.sorokin.eventmanager.registration.RegistrationEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -55,6 +56,19 @@ public class EventEntity {
         this.status = status;
     }
 
+    public EventEntity(Long id, String name, LocalDateTime startAt, Integer durationMinutes, Integer maxPlaces, Integer occupiedPlaces, String status, Integer cost, Long locationId, Long ownerId, List<RegistrationEntity> registrations) {
+        this.id = id;
+        this.name = name;
+        this.startAt = startAt;
+        this.durationMinutes = durationMinutes;
+        this.maxPlaces = maxPlaces;
+        this.occupiedPlaces = occupiedPlaces;
+        this.status = status;
+        this.cost = cost;
+        this.locationId = locationId;
+        this.ownerId = ownerId;
+        this.registrations = registrations;
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

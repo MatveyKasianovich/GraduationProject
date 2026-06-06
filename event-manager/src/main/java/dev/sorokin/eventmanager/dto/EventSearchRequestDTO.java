@@ -1,7 +1,6 @@
 package dev.sorokin.eventmanager.dto;
 
-import dev.sorokin.eventmanager.data.EventStatus;
-import jakarta.persistence.criteria.CriteriaBuilder;
+import dev.sorokin.eventmanager.event.EventStatus;
 
 import java.time.LocalDateTime;
 
@@ -15,7 +14,7 @@ public record EventSearchRequestDTO (
         Integer costMax,
         Integer durationMin,
         Integer durationMax,
-        Integer locationId,
+        Long locationId,
         EventStatus status
 ){
 }

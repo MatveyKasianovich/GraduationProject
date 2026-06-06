@@ -1,37 +1,21 @@
 package dev.sorokin.eventmanager.security;
 
-import dev.sorokin.eventmanager.entity.UserEntity;
-
-import dev.sorokin.eventmanager.entity.UserRepository;
+import dev.sorokin.eventmanager.user.User;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 
-@Component
 public class SecurityUtils {
 
-    private static UserRepository userRepository;
-
-    public SecurityUtils(UserRepository userRepository) {
-        SecurityUtils.userRepository = userRepository;
-    }
-
-    public static Long getCurrentUserId() {
-        String login = getCurrentUserLogin();
-        UserEntity user = userRepository.findByLogin(login)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return user.getId();
-
+    public static User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return (User) authentication.getPrincipal();
     }
 
     public static String getCurrentUserLogin() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getName();
-
+        return getCurrentUser().getLogin();
     }
 
-    public static String getCurrentUserRole() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getAuthorities().iterator().next().getAuthority();
-
+    public static Long getCurrentUserId() {
+        return getCurrentUser().getId();
     }
 }

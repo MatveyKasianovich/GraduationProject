@@ -1,6 +1,10 @@
-package dev.sorokin.eventmanager.entityToBusinnes;
+package dev.sorokin.eventmanager.event;
+
+import dev.sorokin.eventmanager.registration.Registration;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Event {
 
@@ -14,6 +18,7 @@ public class Event {
     private String status;
     private Integer cost;
     private Long ownerId;
+    private List<Registration>registrations;
 
     // Конструктор для создания нового события (без id)
     public Event(String name, LocalDateTime startAt, Integer durationMinutes,
@@ -30,11 +35,41 @@ public class Event {
         this.ownerId = ownerId;
     }
 
+    public Event() {
+    }
+
+    // В классе Event добавьте этот конструктор
+    public Event(String name, LocalDateTime startAt, Integer durationMinutes,
+                 Integer maxPlaces, Long locationId, Integer occupiedPlaces,
+                 Integer cost, String status) {
+        this.name = name;
+        this.startAt = startAt;
+        this.durationMinutes = durationMinutes;
+        this.maxPlaces = maxPlaces;
+        this.locationId = locationId;
+        this.occupiedPlaces = occupiedPlaces;
+        this.cost = cost;
+        this.status = status;
+    }
+
     // Полный конструктор (для существующего события с id)
     public Event(Long id, String name, LocalDateTime startAt, Integer durationMinutes,
                  Integer maxPlaces, Long locationId, Integer occupiedPlaces,
-                 String status, Integer cost, Long ownerId) {
+                 String status, Integer cost, Long ownerId,List<Registration>registrations) {
         this.id = id;
+        this.name = name;
+        this.startAt = startAt;
+        this.durationMinutes = durationMinutes;
+        this.maxPlaces = maxPlaces;
+        this.locationId = locationId;
+        this.occupiedPlaces = occupiedPlaces;
+        this.status=status;
+        this.cost = cost;
+        this.ownerId = ownerId;
+        this.registrations=registrations;
+    }
+
+    public Event(String name, LocalDateTime startAt, Integer durationMinutes, Integer maxPlaces, Long locationId, Integer occupiedPlaces, String status, Integer cost) {
         this.name = name;
         this.startAt = startAt;
         this.durationMinutes = durationMinutes;
@@ -43,10 +78,9 @@ public class Event {
         this.occupiedPlaces = occupiedPlaces;
         this.status = status;
         this.cost = cost;
-        this.ownerId = ownerId;
     }
 
-    // Геттеры и сеттеры
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

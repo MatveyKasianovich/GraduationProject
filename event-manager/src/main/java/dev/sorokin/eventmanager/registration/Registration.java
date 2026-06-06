@@ -1,35 +1,33 @@
-package dev.sorokin.eventmanager.entity;
+package dev.sorokin.eventmanager.registration;
 
-import jakarta.persistence.*;
+import dev.sorokin.eventmanager.event.EventEntity;
+import dev.sorokin.eventmanager.user.UserEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "registration")
-public class RegistrationEntity {
+public class Registration {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
     private EventEntity event;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
-
-    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public RegistrationEntity() {}
-
-    public RegistrationEntity(EventEntity event, UserEntity user, LocalDateTime createdAt) {
+    public Registration(Long id, EventEntity event, UserEntity user, LocalDateTime createdAt) {
+        this.id = id;
         this.event = event;
         this.user = user;
         this.createdAt = createdAt;
     }
 
+    public Registration(EventEntity event, UserEntity user, LocalDateTime createdAt) {
+        this.event = event;
+        this.user = user;
+        this.createdAt = createdAt;
+    }
 
     public Long getId() {
         return id;

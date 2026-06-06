@@ -1,6 +1,6 @@
 package dev.sorokin.eventmanager.dto;
 
-import dev.sorokin.eventmanager.data.Role;
+import dev.sorokin.eventmanager.user.Role;
 
 public class UserDTO {
 

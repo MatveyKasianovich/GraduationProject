@@ -1,9 +1,8 @@
-package dev.sorokin.eventmanager.service;
+package dev.sorokin.eventmanager.location;
 
 
-import dev.sorokin.eventmanager.entity.LocationEntity;
-import dev.sorokin.eventmanager.entity.LocationRepository;
-import dev.sorokin.eventmanager.entityToBusinnes.Location;
+import dev.sorokin.eventmanager.event.EventEntity;
+import dev.sorokin.eventmanager.event.EventRepository;
 import dev.sorokin.eventmanager.mapper.LocationMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -16,10 +15,12 @@ import java.util.stream.Collectors;
 @Transactional
 public class LocationService {
 
+    private final EventRepository eventRepository;
     private final LocationMapper mapper;
     private final LocationRepository locationRepository;
 
-    public LocationService(LocationMapper mapper, LocationRepository locationRepository) {
+    public LocationService(EventRepository eventRepository, LocationMapper mapper, LocationRepository locationRepository) {
+        this.eventRepository = eventRepository;
         this.mapper = mapper;
         this.locationRepository = locationRepository;
     }
@@ -44,6 +45,11 @@ public class LocationService {
             throw new EntityNotFoundException("No entity with id=%s".formatted(id));
         }
 
+        List<EventEntity>placesMoreThanInLocationToUpdate=eventRepository.findAllByLocationIdWithMaxPlaces(id,locationToUpdate.getCapacity());
+        if(!placesMoreThanInLocationToUpdate.isEmpty()){
+            throw new IllegalArgumentException("Events on this location should have more places than in your locationToUpdate");
+        }
+
         LocationEntity updatedEntity = new LocationEntity(
                 id,
                 locationToUpdate.getName(),
@@ -63,8 +69,13 @@ public class LocationService {
 
     @Transactional
     public void deleteLocationById(Long id) {
+
         if(!locationRepository.existsById(id)){
             throw new EntityNotFoundException("No entity with id=%s".formatted(id));
+        }
+
+        if(eventRepository.existsByLocationId(id)){
+            throw new IllegalArgumentException("Location to delete has events");
         }
         locationRepository.deleteLocationEntitiesById(id);
     }

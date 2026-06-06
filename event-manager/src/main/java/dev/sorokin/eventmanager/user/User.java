@@ -1,6 +1,4 @@
-package dev.sorokin.eventmanager.entityToBusinnes;
-
-import dev.sorokin.eventmanager.data.Role;
+package dev.sorokin.eventmanager.user;
 
 public class User {
 

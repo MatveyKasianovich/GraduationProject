@@ -77,6 +77,38 @@ public class SecurityConfiguration {
                                 HttpMethod.DELETE,
                                 "/locations/*"
                         ).hasAuthority("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/events"
+                        ).hasAuthority("USER")
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/events/*"
+                        ).hasAnyAuthority("ADMIN","USER")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/events/my"
+                        ).hasAnyAuthority("ADMIN","USER")
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/events/*"
+                        ).hasAnyAuthority("ADMIN","USER")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/events/search"
+                        ).hasAnyAuthority("ADMIN","USER")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/events/registrations/{eventId}"
+                        ).hasAuthority("USER")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/events/registrations/*"
+                        ).hasAuthority("USER")
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/registrations/cancel/*"
+                        ).hasAuthority("USER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter, AnonymousAuthenticationFilter.class)
