@@ -60,14 +60,14 @@ public class Scheduler {
     private void updateStartedToFinished() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<EventEntity> eventsToFinish = eventRepository.findAllByStatusAndEndTimeBefore(
-                EventStatus.STARTED.name(),
-                now
-        );
+        List<EventEntity> eventsToFinish = eventRepository.findAllByStatus(EventStatus.STARTED.name());
 
         if (!eventsToFinish.isEmpty()) {
             for (EventEntity event : eventsToFinish) {
-                event.setStatus(EventStatus.FINISHED.name());
+                LocalDateTime endTime = event.getStartAt().plusMinutes(event.getDurationMinutes());
+                if (endTime.isBefore(now) || endTime.isEqual(now)) {
+                    event.setStatus(EventStatus.FINISHED.name());
+                }
             }
             eventRepository.saveAll(eventsToFinish);
             log.info("Updated {} events from STARTED to FINISHED", eventsToFinish.size());

@@ -82,10 +82,7 @@ public interface EventRepository extends JpaRepository<EventEntity,Long> {
     );
 
 
-    @Query("SELECT e FROM EventEntity e WHERE e.status = :status AND e.startAt + (e.durationMinutes * 60) <= :now")
-    List<EventEntity> findAllByStatusAndEndTimeBefore(
-            @Param("status") String status,
-            @Param("now") LocalDateTime now
-    );
+    @Query("SELECT e FROM EventEntity e WHERE e.status = :status")
+    List<EventEntity> findAllByStatus(@Param("status") String status);
 
 }

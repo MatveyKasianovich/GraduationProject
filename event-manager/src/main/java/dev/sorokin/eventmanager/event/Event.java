@@ -20,7 +20,7 @@ public class Event {
     private Long ownerId;
     private List<Registration>registrations;
 
-    // Конструктор для создания нового события (без id)
+
     public Event(String name, LocalDateTime startAt, Integer durationMinutes,
                  Integer maxPlaces, Long locationId, Integer occupiedPlaces,
                  String status, Integer cost, Long ownerId) {
@@ -38,7 +38,7 @@ public class Event {
     public Event() {
     }
 
-    // В классе Event добавьте этот конструктор
+
     public Event(String name, LocalDateTime startAt, Integer durationMinutes,
                  Integer maxPlaces, Long locationId, Integer occupiedPlaces,
                  Integer cost, String status) {
@@ -52,7 +52,7 @@ public class Event {
         this.status = status;
     }
 
-    // Полный конструктор (для существующего события с id)
+
     public Event(Long id, String name, LocalDateTime startAt, Integer durationMinutes,
                  Integer maxPlaces, Long locationId, Integer occupiedPlaces,
                  String status, Integer cost, Long ownerId,List<Registration>registrations) {
