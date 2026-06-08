@@ -1,0 +1,113 @@
+package dev.sorokin.eventmanager.event;
+
+import dev.sorokin.eventmanager.registration.Registration;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Event {
+
+    private Long id;
+    private String name;
+    private LocalDateTime startAt;
+    private Integer durationMinutes;
+    private Integer maxPlaces;
+    private Long locationId;
+    private Integer occupiedPlaces;
+    private String status;
+    private Integer cost;
+    private Long ownerId;
+    private List<Registration>registrations;
+
+
+    public Event(String name, LocalDateTime startAt, Integer durationMinutes,
+                 Integer maxPlaces, Long locationId, Integer occupiedPlaces,
+                 String status, Integer cost, Long ownerId) {
+        this.name = name;
+        this.startAt = startAt;
+        this.durationMinutes = durationMinutes;
+        this.maxPlaces = maxPlaces;
+        this.locationId = locationId;
+        this.occupiedPlaces = occupiedPlaces;
+        this.status = status;
+        this.cost = cost;
+        this.ownerId = ownerId;
+    }
+
+    public Event() {
+    }
+
+
+    public Event(String name, LocalDateTime startAt, Integer durationMinutes,
+                 Integer maxPlaces, Long locationId, Integer occupiedPlaces,
+                 Integer cost, String status) {
+        this.name = name;
+        this.startAt = startAt;
+        this.durationMinutes = durationMinutes;
+        this.maxPlaces = maxPlaces;
+        this.locationId = locationId;
+        this.occupiedPlaces = occupiedPlaces;
+        this.cost = cost;
+        this.status = status;
+    }
+
+
+    public Event(Long id, String name, LocalDateTime startAt, Integer durationMinutes,
+                 Integer maxPlaces, Long locationId, Integer occupiedPlaces,
+                 String status, Integer cost, Long ownerId,List<Registration>registrations) {
+        this.id = id;
+        this.name = name;
+        this.startAt = startAt;
+        this.durationMinutes = durationMinutes;
+        this.maxPlaces = maxPlaces;
+        this.locationId = locationId;
+        this.occupiedPlaces = occupiedPlaces;
+        this.status=status;
+        this.cost = cost;
+        this.ownerId = ownerId;
+        this.registrations=registrations;
+    }
+
+    public Event(String name, LocalDateTime startAt, Integer durationMinutes, Integer maxPlaces, Long locationId, Integer occupiedPlaces, String status, Integer cost) {
+        this.name = name;
+        this.startAt = startAt;
+        this.durationMinutes = durationMinutes;
+        this.maxPlaces = maxPlaces;
+        this.locationId = locationId;
+        this.occupiedPlaces = occupiedPlaces;
+        this.status = status;
+        this.cost = cost;
+    }
+
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public LocalDateTime getStartAt() { return startAt; }
+    public void setStartAt(LocalDateTime startAt) { this.startAt = startAt; }
+
+    public Integer getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
+
+    public Integer getMaxPlaces() { return maxPlaces; }
+    public void setMaxPlaces(Integer maxPlaces) { this.maxPlaces = maxPlaces; }
+
+    public Long getLocationId() { return locationId; }
+    public void setLocationId(Long locationId) { this.locationId = locationId; }
+
+    public Integer getOccupiedPlaces() { return occupiedPlaces; }
+    public void setOccupiedPlaces(Integer occupiedPlaces) { this.occupiedPlaces = occupiedPlaces; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Integer getCost() { return cost; }
+    public void setCost(Integer cost) { this.cost = cost; }
+
+    public Long getOwnerId() { return ownerId; }
+    public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
+}

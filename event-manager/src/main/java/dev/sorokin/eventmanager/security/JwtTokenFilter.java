@@ -1,8 +1,8 @@
 package dev.sorokin.eventmanager.security;
 
 
-import dev.sorokin.eventmanager.entityToBusinnes.User;
-import dev.sorokin.eventmanager.service.UserService;
+import dev.sorokin.eventmanager.user.User;
+import dev.sorokin.eventmanager.user.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;

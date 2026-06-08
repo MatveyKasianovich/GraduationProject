@@ -1,9 +1,9 @@
 package dev.sorokin.eventmanager.mapper;
 
-import dev.sorokin.eventmanager.data.Role;
+import dev.sorokin.eventmanager.user.Role;
 import dev.sorokin.eventmanager.dto.UserDTO;
-import dev.sorokin.eventmanager.entity.UserEntity;
-import dev.sorokin.eventmanager.entityToBusinnes.User;
+import dev.sorokin.eventmanager.user.UserEntity;
+import dev.sorokin.eventmanager.user.User;
 import org.springframework.stereotype.Component;
 
 @Component

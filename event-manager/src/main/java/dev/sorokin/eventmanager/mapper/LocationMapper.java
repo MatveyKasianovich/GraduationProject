@@ -2,8 +2,8 @@ package dev.sorokin.eventmanager.mapper;
 
 
 import dev.sorokin.eventmanager.dto.LocationDTO;
-import dev.sorokin.eventmanager.entity.LocationEntity;
-import dev.sorokin.eventmanager.entityToBusinnes.Location;
+import dev.sorokin.eventmanager.location.LocationEntity;
+import dev.sorokin.eventmanager.location.Location;
 import org.springframework.stereotype.Component;
 
 @Component

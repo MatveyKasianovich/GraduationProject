@@ -7,7 +7,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.authentication.configurers.userdetails.DaoAuthenticationConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -78,6 +77,38 @@ public class SecurityConfiguration {
                                 HttpMethod.DELETE,
                                 "/locations/*"
                         ).hasAuthority("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/events"
+                        ).hasAuthority("USER")
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/events/*"
+                        ).hasAnyAuthority("ADMIN","USER")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/events/my"
+                        ).hasAnyAuthority("ADMIN","USER")
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/events/*"
+                        ).hasAnyAuthority("ADMIN","USER")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/events/search"
+                        ).hasAnyAuthority("ADMIN","USER")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/events/registrations/{eventId}"
+                        ).hasAuthority("USER")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/events/registrations/*"
+                        ).hasAuthority("USER")
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/registrations/cancel/*"
+                        ).hasAuthority("USER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter, AnonymousAuthenticationFilter.class)

@@ -1,9 +1,10 @@
-package dev.sorokin.eventmanager.service;
+package dev.sorokin.eventmanager.adminCreation;
 
 
-import dev.sorokin.eventmanager.data.Role;
-import dev.sorokin.eventmanager.entity.UserEntity;
-import dev.sorokin.eventmanager.entity.UserRepository;
+import dev.sorokin.eventmanager.user.Role;
+import dev.sorokin.eventmanager.user.UserEntity;
+import dev.sorokin.eventmanager.user.UserRepository;
+import dev.sorokin.eventmanager.user.UserService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;

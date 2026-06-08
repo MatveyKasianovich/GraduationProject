@@ -1,19 +1,19 @@
 package dev.sorokin.eventmanager.exceptionHandler;
 
 
-import dev.sorokin.eventmanager.controller.LocationController;
 import dev.sorokin.eventmanager.dto.ErrorMessageResponse;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorMessageResponse> handleNotValidArgument(EntityNotFoundException e) {
-        log.error("Got NoSuchElementexception", e);
+        log.error("Got EntityNotFoundException", e);
 
         ErrorMessageResponse errorDto =  new ErrorMessageResponse(
                 "не существует сущности с таким id",
@@ -67,7 +67,32 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorDto);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorMessageResponse> handleAccessDenied(AccessDeniedException e) {
+        ErrorMessageResponse errorDto=new  ErrorMessageResponse(
+                "Forbidden",
+                e.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(errorDto);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ErrorMessageResponse> handleError(IOException e){
+        ErrorMessageResponse errorDto=new  ErrorMessageResponse(
+                "Internal exception",
+                e.getMessage(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(errorDto);
     }
 

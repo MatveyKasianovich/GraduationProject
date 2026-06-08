@@ -1,10 +1,8 @@
-package dev.sorokin.eventmanager.controller;
+package dev.sorokin.eventmanager.location;
 
 
 import dev.sorokin.eventmanager.dto.LocationDTO;
 import dev.sorokin.eventmanager.mapper.LocationMapper;
-import dev.sorokin.eventmanager.entityToBusinnes.Location;
-import dev.sorokin.eventmanager.service.LocationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

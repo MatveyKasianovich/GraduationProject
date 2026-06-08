@@ -1,7 +1,6 @@
-package dev.sorokin.eventmanager.entity;
+package dev.sorokin.eventmanager.user;
 
 
-import org.apache.kafka.common.quota.ClientQuotaAlteration;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

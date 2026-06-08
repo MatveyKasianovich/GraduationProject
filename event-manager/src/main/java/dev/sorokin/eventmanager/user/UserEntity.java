@@ -1,8 +1,6 @@
-package dev.sorokin.eventmanager.entity;
+package dev.sorokin.eventmanager.user;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "users")
@@ -16,7 +14,7 @@ public class UserEntity {
     @Column(name = "user_login", unique = true)
     private String login;
 
-    @Column(name = "user_password")  // Это поле ДОЛЖНО быть
+    @Column(name = "user_password")
     private String password;
 
 
@@ -30,9 +28,6 @@ public class UserEntity {
     public UserEntity() {
     }
 
-
-
-    // Конструктор со всеми полями
     public UserEntity(Long id,String login, String password, int age, String role) {
         this.id=id;
         this.login = login;
@@ -41,7 +36,7 @@ public class UserEntity {
         this.password = password;
     }
 
-    // Геттеры и сеттеры
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -54,6 +49,6 @@ public class UserEntity {
     public int getAge() { return age; }
     public void setAge(int age) { this.age = age; }
 
-    public String getPassword() { return password; }  // Геттер для пароля
-    public void setPassword(String password) { this.password = password; }  // Сеттер для пароля
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 }
