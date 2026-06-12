@@ -29,10 +29,10 @@ public class EventEntity {
     @Column(name = "occupied_places")
     private Integer occupiedPlaces;
 
-    @Column(nullable = false)
+    @Column(name="status",nullable = false)
     private String status;
 
-    @Column
+    @Column(name="cost")
     private Integer cost;
 
     @Column(name = "location_id")

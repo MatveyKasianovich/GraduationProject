@@ -1,4 +1,4 @@
-package dev.sorokin.eventmanager.adminCreation;
+package dev.sorokin.eventmanager.admincreation;
 
 
 import dev.sorokin.eventmanager.user.Role;
@@ -29,11 +29,11 @@ public class AdminCreation {
             return;
         }
 
-        UserEntity adminTosave=(new UserEntity(null,
+        UserEntity adminToSave=(new UserEntity(null,
                 "admin",
                 passwordEncoder.encode("admin"),
                 19,
                 Role.ADMIN.name()));
-        userRepository.save(adminTosave);
+        userRepository.save(adminToSave);
     }
 }

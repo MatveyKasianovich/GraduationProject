@@ -1,4 +1,4 @@
-package dev.sorokin.eventmanager.dto;
+package dev.sorokin.eventcommon.kafka;
 
 import java.time.LocalDateTime;
 

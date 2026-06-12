@@ -1,5 +1,4 @@
-package dev.sorokin.eventmanager.exceptionHandler;
-
+package dev.sorokin.eventnotificator.exception;
 
 import dev.sorokin.eventcommon.kafka.ErrorMessageResponse;
 import jakarta.persistence.EntityNotFoundException;
@@ -40,50 +39,6 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorMessageResponse> handleNotValidArgument(EntityNotFoundException e) {
-        log.error("Got EntityNotFoundException", e);
-
-        ErrorMessageResponse errorDto =  new ErrorMessageResponse(
-                "не существует сущности с таким id",
-                e.getMessage(),
-                LocalDateTime.now()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(errorDto);
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorMessageResponse> handleNotValidArgument(IllegalArgumentException e) {
-        log.error("Got IllegalArgumentException", e);
-
-        ErrorMessageResponse errorDto =  new ErrorMessageResponse(
-                "обнаружены неверные данные во время обработки на сервере",
-                e.getMessage(),
-                LocalDateTime.now()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(errorDto);
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorMessageResponse> handleAccessDenied(AccessDeniedException e) {
-        ErrorMessageResponse errorDto=new  ErrorMessageResponse(
-                "Forbidden",
-                e.getMessage(),
-                LocalDateTime.now()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(errorDto);
-    }
-
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ErrorMessageResponse> handleError(IOException e){
         ErrorMessageResponse errorDto=new  ErrorMessageResponse(
@@ -95,6 +50,5 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(errorDto);
     }
-
-
 }
+

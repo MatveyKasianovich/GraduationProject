@@ -1,8 +1,14 @@
 package dev.sorokin.eventmanager.scheduler;
 
+import dev.sorokin.eventcommon.kafka.NotificationChange;
+import dev.sorokin.eventcommon.kafka.NotificationPayload;
+import dev.sorokin.eventmanager.event.Event;
 import dev.sorokin.eventmanager.event.EventEntity;
 import dev.sorokin.eventmanager.event.EventRepository;
 import dev.sorokin.eventmanager.event.EventStatus;
+import dev.sorokin.eventmanager.kafka.KafkaSender;
+import dev.sorokin.eventmanager.mapper.EventMapper;
+import dev.sorokin.eventmanager.registration.RegistrationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -10,8 +16,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
+
+import static dev.sorokin.eventmanager.event.EventStatus.*;
 
 @Component
 @EnableScheduling
@@ -19,9 +29,15 @@ public class Scheduler {
 
     private static final Logger log = LoggerFactory.getLogger(Scheduler.class);
 
+    private final EventMapper eventMapper;
+    private final KafkaSender kafkaSender;
+    private final RegistrationRepository registrationRepository;
     private final EventRepository eventRepository;
 
-    public Scheduler(EventRepository eventRepository) {
+    public Scheduler(EventMapper eventMapper, KafkaSender kafkaSender, RegistrationRepository registrationRepository, EventRepository eventRepository) {
+        this.eventMapper = eventMapper;
+        this.kafkaSender = kafkaSender;
+        this.registrationRepository = registrationRepository;
         this.eventRepository = eventRepository;
     }
 
@@ -45,10 +61,14 @@ public class Scheduler {
                 EventStatus.WAIT_START.name(),
                 now
         );
-
         if (!eventsToStart.isEmpty()) {
             for (EventEntity event : eventsToStart) {
-                event.setStatus(EventStatus.STARTED.name());
+
+                Event oldEventDto = eventMapper.toEventFromEntity(event);
+                EventEntity oldEvent = eventMapper.toEntityFromEvent(oldEventDto);
+
+                event.setStatus(STARTED.name());
+                publishNotificationToKafka(oldEvent, event);
             }
 
             eventRepository.saveAll(eventsToStart);
@@ -60,17 +80,50 @@ public class Scheduler {
     private void updateStartedToFinished() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<EventEntity> eventsToFinish = eventRepository.findAllByStatus(EventStatus.STARTED.name());
+        List<EventEntity> eventsToFinish = eventRepository.findAllByStatus(STARTED.name());
 
         if (!eventsToFinish.isEmpty()) {
             for (EventEntity event : eventsToFinish) {
                 LocalDateTime endTime = event.getStartAt().plusMinutes(event.getDurationMinutes());
                 if (endTime.isBefore(now) || endTime.isEqual(now)) {
-                    event.setStatus(EventStatus.FINISHED.name());
+                    Event oldEventDto = eventMapper.toEventFromEntity(event);
+                    EventEntity oldEvent = eventMapper.toEntityFromEvent(oldEventDto);
+                    event.setStatus(FINISHED.name());
+                    publishNotificationToKafka(oldEvent,event);
                 }
             }
             eventRepository.saveAll(eventsToFinish);
             log.info("Updated {} events from STARTED to FINISHED", eventsToFinish.size());
         }
+    }
+
+    private void publishNotificationToKafka(EventEntity oldEvent, EventEntity newEvent) {
+        String messageId = UUID.randomUUID().toString();
+
+        List<NotificationChange> changes = List.of(
+                new NotificationChange("status", oldEvent.getStatus(), newEvent.getStatus())
+        );
+
+        List<Long> subscribers = registrationRepository.findUserIdsByEventId(newEvent.getId());
+
+        String eventType = switch (newEvent.getStatus()) {
+            case "STARTED" -> "EVENT_STARTED";
+            case "FINISHED" -> "EVENT_FINISHED";
+            default -> "EVENT_STATUS_CHANGED";
+        };
+
+        NotificationPayload payload = new NotificationPayload(
+                messageId,
+                eventType,
+                newEvent.getId(),
+                LocalDateTime.now(),
+                null,
+                newEvent.getOwnerId(),
+                newEvent.getName(),
+                subscribers,
+                changes
+        );
+
+        kafkaSender.sendNotification(payload);
     }
 }

@@ -1,7 +1,7 @@
-package dev.sorokin.eventmanager.security;
+package dev.sorokin.eventnotificator.jwt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sorokin.eventcommon.kafka.ErrorMessageResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -39,4 +39,3 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         );
     }
 }
-

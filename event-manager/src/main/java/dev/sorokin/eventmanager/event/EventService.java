@@ -1,5 +1,9 @@
 package dev.sorokin.eventmanager.event;
 
+import dev.sorokin.eventcommon.kafka.NotificationChange;
+import dev.sorokin.eventcommon.kafka.NotificationPayload;
+import dev.sorokin.eventmanager.kafka.KafkaEventUpdatesCheck;
+import dev.sorokin.eventmanager.kafka.KafkaSender;
 import dev.sorokin.eventmanager.location.LocationEntity;
 import dev.sorokin.eventmanager.location.LocationRepository;
 import dev.sorokin.eventmanager.mapper.EventMapper;
@@ -14,8 +18,8 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.security.access.AccessDeniedException;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,14 +29,19 @@ public class EventService {
     private final LocationRepository locationRepository;
     private final EventRepository eventRepository;
     private final RegistrationRepository registrationRepository;
+    private final KafkaSender kafkaSender;
+    private final KafkaEventUpdatesCheck kafkaEventUpdatesCheck;
 
 
-    public EventService(EventMapper eventMapper, LocationRepository locationRepository, EventRepository eventRepository, RegistrationRepository registrationRepository) {
+    public EventService(EventMapper eventMapper, LocationRepository locationRepository, EventRepository eventRepository, RegistrationRepository registrationRepository, KafkaSender kafkaSender, KafkaEventUpdatesCheck kafkaEventUpdatesCheck) {
         this.eventMapper = eventMapper;
         this.locationRepository = locationRepository;
         this.eventRepository=eventRepository;
         this.registrationRepository = registrationRepository;
+        this.kafkaSender = kafkaSender;
+        this.kafkaEventUpdatesCheck = kafkaEventUpdatesCheck;
     }
+
 
     @Transactional
     public Event createEvent(Event eventToCreate) {
@@ -62,18 +71,28 @@ public class EventService {
     @Transactional
     public void deleteEventById(Long id) throws AccessDeniedException {
 
-        EventEntity eventEntity=eventRepository.findById(id)
-                .orElseThrow(()->new EntityNotFoundException(
+        EventEntity eventEntity = eventRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
                         "Not found event with id: %s".formatted(id)));
 
-        if(!SecurityUtils.getCurrentUserId().equals(eventEntity.getOwnerId())&&!SecurityUtils.getCurrentUser().getRole().equals(Role.ADMIN)){
+        if (!SecurityUtils.getCurrentUserId().equals(eventEntity.getOwnerId()) &&
+                !SecurityUtils.getCurrentUser().getRole().equals(Role.ADMIN)) {
             throw new AccessDeniedException("Access denied");
         }
-        else if(!eventEntity.getStatus().equals(EventStatus.WAIT_START.name())){
+
+        if (!eventEntity.getStatus().equals(EventStatus.WAIT_START.name())) {
             throw new IllegalArgumentException("Event has already started or cancelled");
         }
 
+        Event oldEventDto = eventMapper.toEventFromEntity(eventEntity);
         eventEntity.setStatus(EventStatus.CANCELLED.name());
+        eventRepository.save(eventEntity);
+
+        kafkaEventUpdatesCheck.publishEventUpdated(
+                oldEventDto,
+                eventMapper.toEventFromEntity(eventEntity),
+                SecurityUtils.getCurrentUserId()
+        );
     }
 
     public Event getEventById(Long id) {
@@ -116,6 +135,8 @@ public class EventService {
                             .formatted(location.getCapacity(), eventToUpdate.getMaxPlaces()));
         }
 
+        Event oldEvent = eventMapper.toEventFromEntity(existingEvent);
+
         existingEvent.setName(eventToUpdate.getName());
         existingEvent.setStartAt(eventToUpdate.getStartAt());
         existingEvent.setDurationMinutes(eventToUpdate.getDurationMinutes());
@@ -124,8 +145,11 @@ public class EventService {
         existingEvent.setLocationId(eventToUpdate.getLocationId());
 
         EventEntity savedEntity = eventRepository.save(existingEvent);
+        Event updatedEvent = eventMapper.toEventFromEntity(savedEntity);
 
-        return eventMapper.toEventFromEntity(savedEntity);
+        kafkaEventUpdatesCheck.publishEventUpdated(oldEvent, updatedEvent, SecurityUtils.getCurrentUserId());
+
+        return updatedEvent;
     }
 
     public List<Event> getAllEventsByOwner() {
@@ -163,7 +187,8 @@ public class EventService {
         return allEvents.stream()
                 .map(eventEntity -> eventMapper.toEventFromEntity(eventEntity))
                 .collect(Collectors.toList());
-
     }
+
+
 
 }
