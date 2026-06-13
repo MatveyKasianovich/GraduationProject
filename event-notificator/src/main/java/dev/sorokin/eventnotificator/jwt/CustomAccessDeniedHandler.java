@@ -1,42 +1,41 @@
-package dev.sorokin.eventmanager.security;
+package dev.sorokin.eventnotificator.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.sorokin.eventcommon.kafka.ErrorMessageResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 
 @Component
-public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
     private final ObjectMapper objectMapper;
 
-    public CustomAuthenticationEntryPoint(ObjectMapper objectMapper) {
+    public CustomAccessDeniedHandler(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
     @Override
-    public void commence(
-            HttpServletRequest request, HttpServletResponse response,
-            AuthenticationException ex
+    public void handle(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AccessDeniedException ex
     ) throws IOException {
-        ErrorMessageResponse body = new ErrorMessageResponse(
-                "Failed to authenticate",
+        dev.sorokin.eventcommon.kafka.ErrorMessageResponse body = new dev.sorokin.eventcommon.kafka.ErrorMessageResponse(
+                "Forbidden",
                 ex.getMessage(),
                 LocalDateTime.now()
         );
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setStatus(HttpStatus.FORBIDDEN.value());
         response.getWriter().write(
                 objectMapper.writeValueAsString(body)
         );
     }
 }
-

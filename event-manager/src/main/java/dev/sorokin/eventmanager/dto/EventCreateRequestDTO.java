@@ -81,4 +81,5 @@ public class EventCreateRequestDTO {
     public void setName(String name) {
         this.name = name;
     }
+
 }

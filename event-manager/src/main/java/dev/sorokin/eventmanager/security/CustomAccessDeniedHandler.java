@@ -1,7 +1,7 @@
 package dev.sorokin.eventmanager.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.sorokin.eventmanager.dto.ErrorMessageResponse;
+import dev.sorokin.eventcommon.kafka.ErrorMessageResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;

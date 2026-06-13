@@ -1,4 +1,4 @@
-package dev.sorokin.eventmanager.security;
+package dev.sorokin.eventnotificator.jwt;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -15,9 +15,6 @@ public class JwtTokenManager {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
-    private long expirationTime;
-
     private SecretKey key;
 
     @PostConstruct
@@ -26,17 +23,6 @@ public class JwtTokenManager {
     }
 
 
-    public String generateToken(Long userId, String login, String role) {
-        return Jwts.builder()
-                .subject(login)
-                .claim("userId", userId)
-                .claim("role", role)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(key)
-                .compact();
-    }
-
     public String getLoginFromJwt(String jwt) {
         return Jwts.parser()
                 .verifyWith(key)
@@ -44,5 +30,23 @@ public class JwtTokenManager {
                 .parseSignedClaims(jwt)
                 .getPayload()
                 .getSubject();
+    }
+
+    public Long getUserIdFromJwt(String jwt) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(jwt)
+                .getPayload()
+                .get("userId", Long.class);
+    }
+
+    public String getRoleFromJwt(String jwt) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(jwt)
+                .getPayload()
+                .get("role", String.class);
     }
 }
