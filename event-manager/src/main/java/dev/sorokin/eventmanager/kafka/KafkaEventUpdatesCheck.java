@@ -41,7 +41,7 @@ public class KafkaEventUpdatesCheck {
         if (!Objects.equals(oldEvent.getStatus(), newEvent.getStatus())) {
             payload = new NotificationPayload(
                     messageId,
-                    "EVENT_CANCELLED",
+                    EventStatus.EVENT_CANCELLED.name(),
                     newEvent.getId(),
                     LocalDateTime.now(),
                     changedById,
@@ -53,7 +53,7 @@ public class KafkaEventUpdatesCheck {
         }else {
             payload = new NotificationPayload(
                     messageId,
-                    "EVENT_UPDATED",
+                    EventStatus.EVENT_UPDATED.name(),
                     newEvent.getId(),
                     LocalDateTime.now(),
                     changedById,
@@ -71,25 +71,25 @@ public class KafkaEventUpdatesCheck {
         List<NotificationChange> changes = new ArrayList<>();
 
         if (!Objects.equals(oldEvent.getName(), newEvent.getName())) {
-            changes.add(new NotificationChange("name", oldEvent.getName(), newEvent.getName()));
+            changes.add(new NotificationChange(UpdatedFields.EVENT_NAME.name(), oldEvent.getName(), newEvent.getName()));
         }
         if (!Objects.equals(oldEvent.getStartAt(), newEvent.getStartAt())) {
-            changes.add(new NotificationChange("startAt", oldEvent.getStartAt(), newEvent.getStartAt()));
+            changes.add(new NotificationChange(UpdatedFields.EVENT_NAME.name(), oldEvent.getStartAt(), newEvent.getStartAt()));
         }
         if (!Objects.equals(oldEvent.getDurationMinutes(), newEvent.getDurationMinutes())) {
-            changes.add(new NotificationChange("durationMinutes", oldEvent.getDurationMinutes(), newEvent.getDurationMinutes()));
+            changes.add(new NotificationChange(UpdatedFields.EVENT_DURATION_MINUTES.name(), oldEvent.getDurationMinutes(), newEvent.getDurationMinutes()));
         }
         if (!Objects.equals(oldEvent.getMaxPlaces(), newEvent.getMaxPlaces())) {
-            changes.add(new NotificationChange("maxPlaces", oldEvent.getMaxPlaces(), newEvent.getMaxPlaces()));
+            changes.add(new NotificationChange(UpdatedFields.EVENT_MAX_PLACES.name(), oldEvent.getMaxPlaces(), newEvent.getMaxPlaces()));
         }
         if (!Objects.equals(oldEvent.getCost(), newEvent.getCost())) {
-            changes.add(new NotificationChange("cost", oldEvent.getCost(), newEvent.getCost()));
+            changes.add(new NotificationChange(UpdatedFields.EVENT_COST.name(), oldEvent.getCost(), newEvent.getCost()));
         }
         if (!Objects.equals(oldEvent.getLocationId(), newEvent.getLocationId())) {
-            changes.add(new NotificationChange("locationId", oldEvent.getLocationId(), newEvent.getLocationId()));
+            changes.add(new NotificationChange(UpdatedFields.EVENT_LOCATION_ID.name(), oldEvent.getLocationId(), newEvent.getLocationId()));
         }
         if (!Objects.equals(oldEvent.getStatus(), newEvent.getStatus())) {
-            changes.add(new NotificationChange("status", oldEvent.getStatus(), newEvent.getStatus()));
+            changes.add(new NotificationChange(UpdatedFields.EVENT_STATUS.name(), oldEvent.getStatus(), newEvent.getStatus()));
         }
 
         return changes;
