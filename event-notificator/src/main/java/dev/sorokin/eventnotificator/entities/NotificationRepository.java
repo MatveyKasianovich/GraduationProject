@@ -24,8 +24,14 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     @Transactional
     @Query("""
     UPDATE NotificationEntity n 
-    SET n.isRead = true, n.readAt = CURRENT_TIMESTAMP 
+    SET n.isRead = true , n.readAt = CURRENT_TIMESTAMP 
     WHERE n.userId = :userId AND n.id IN :ids
     """)
     void markNotificationsAsRead(@Param("userId") Long userId, @Param("ids") List<Long> ids);
+
+
+    @Query("SELECT COUNT(n) FROM NotificationEntity n " +
+            "WHERE n.isRead = false AND n.userId = :userId")
+    Long countUnreadByUserId(@Param("userId") Long userId);
+
 }

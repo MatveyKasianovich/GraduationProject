@@ -2,6 +2,7 @@ package dev.sorokin.eventmanager.event;
 
 import dev.sorokin.eventcommon.kafka.NotificationChange;
 import dev.sorokin.eventcommon.kafka.NotificationPayload;
+import dev.sorokin.eventmanager.cache.CacheService;
 import dev.sorokin.eventmanager.kafka.KafkaEventUpdatesCheck;
 import dev.sorokin.eventmanager.kafka.KafkaSender;
 import dev.sorokin.eventmanager.location.LocationEntity;
@@ -13,15 +14,20 @@ import dev.sorokin.eventmanager.security.SecurityUtils;
 import dev.sorokin.eventmanager.user.Role;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import org.springframework.security.access.AccessDeniedException;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class EventService {
 
@@ -31,15 +37,20 @@ public class EventService {
     private final RegistrationRepository registrationRepository;
     private final KafkaSender kafkaSender;
     private final KafkaEventUpdatesCheck kafkaEventUpdatesCheck;
+    private final CacheService cacheService;
+    private final RedisTemplate<String,EventEntity> redisTemplate;
+    private static final String REDIS_PREFIX = "event:";
 
 
-    public EventService(EventMapper eventMapper, LocationRepository locationRepository, EventRepository eventRepository, RegistrationRepository registrationRepository, KafkaSender kafkaSender, KafkaEventUpdatesCheck kafkaEventUpdatesCheck) {
+    public EventService(EventMapper eventMapper, LocationRepository locationRepository, EventRepository eventRepository, RegistrationRepository registrationRepository, KafkaSender kafkaSender, KafkaEventUpdatesCheck kafkaEventUpdatesCheck, CacheService cacheService, RedisTemplate<String, EventEntity> redisTemplate) {
         this.eventMapper = eventMapper;
         this.locationRepository = locationRepository;
         this.eventRepository=eventRepository;
         this.registrationRepository = registrationRepository;
         this.kafkaSender = kafkaSender;
         this.kafkaEventUpdatesCheck = kafkaEventUpdatesCheck;
+        this.cacheService = cacheService;
+        this.redisTemplate = redisTemplate;
     }
 
 
@@ -71,9 +82,12 @@ public class EventService {
     @Transactional
     public void deleteEventById(Long id) throws AccessDeniedException {
 
+
         EventEntity eventEntity = eventRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Not found event with id: %s".formatted(id)));
+
+
 
         if (!SecurityUtils.getCurrentUserId().equals(eventEntity.getOwnerId()) &&
                 !SecurityUtils.getCurrentUser().getRole().equals(Role.ADMIN)) {
@@ -84,9 +98,13 @@ public class EventService {
             throw new IllegalArgumentException("Event has already started or cancelled");
         }
 
+        String key = REDIS_PREFIX + id;
+
         Event oldEventDto = eventMapper.toEventFromEntity(eventEntity);
         eventEntity.setStatus(EventStatus.CANCELLED.name());
         eventRepository.save(eventEntity);
+
+        cacheService.writeEventToRedisIfPresent(key,eventEntity);
 
         kafkaEventUpdatesCheck.publishEventUpdated(
                 oldEventDto,
@@ -95,14 +113,29 @@ public class EventService {
         );
     }
 
+    @Transactional
     public Event getEventById(Long id) {
-        return eventMapper.toEventFromEntity(eventRepository.findById(id)
+
+        String key= REDIS_PREFIX + id;
+
+        EventEntity eventFromCache=cacheService.readEventFromRedis(key);
+        if (eventFromCache!=null) {
+            log.info("Get from Redis event successfully");
+            return eventMapper.toEventFromEntity(eventFromCache);
+        }
+
+        EventEntity foundEvent=eventRepository.findById(id)
                 .orElseThrow(()->new EntityNotFoundException(
-                        "Not found event with id: %s".formatted(id))));
+                        "Not found event with id: %s".formatted(id)));
+
+        cacheService.writeEventToRedis(key, foundEvent);
+
+        return eventMapper.toEventFromEntity(foundEvent);
     }
 
     @Transactional
     public Event updateEventById(Event eventToUpdate, Long id) {
+
 
         EventEntity existingEvent = eventRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -114,7 +147,6 @@ public class EventService {
             throw new AccessDeniedException("Access denied");
         }
 
-
         int registrationsCount = eventRepository.countRegistrationsByEventId(id);
 
         if (registrationsCount > eventToUpdate.getMaxPlaces()) {
@@ -123,7 +155,6 @@ public class EventService {
                             eventToUpdate.getMaxPlaces(), registrationsCount)
             );
         }
-
 
         LocationEntity location = locationRepository.findById(eventToUpdate.getLocationId())
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -134,6 +165,8 @@ public class EventService {
                     "The capacity of the location (%d) is less than the number of maxPlaces (%d)"
                             .formatted(location.getCapacity(), eventToUpdate.getMaxPlaces()));
         }
+
+        String key= REDIS_PREFIX + id;
 
         Event oldEvent = eventMapper.toEventFromEntity(existingEvent);
 
@@ -147,6 +180,8 @@ public class EventService {
         EventEntity savedEntity = eventRepository.save(existingEvent);
         Event updatedEvent = eventMapper.toEventFromEntity(savedEntity);
 
+
+        cacheService.writeEventToRedisIfPresent(key, savedEntity);
         kafkaEventUpdatesCheck.publishEventUpdated(oldEvent, updatedEvent, SecurityUtils.getCurrentUserId());
 
         return updatedEvent;
@@ -188,6 +223,8 @@ public class EventService {
                 .map(eventEntity -> eventMapper.toEventFromEntity(eventEntity))
                 .collect(Collectors.toList());
     }
+
+
 
 
 

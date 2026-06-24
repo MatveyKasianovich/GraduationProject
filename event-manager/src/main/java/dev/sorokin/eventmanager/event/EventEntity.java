@@ -1,5 +1,6 @@
 package dev.sorokin.eventmanager.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import dev.sorokin.eventmanager.registration.RegistrationEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -42,6 +43,7 @@ public class EventEntity {
     private Long ownerId;
 
     @OneToMany(mappedBy = "event")
+    @JsonIgnore
     private List<RegistrationEntity> registrations = new ArrayList<>();
 
     public EventEntity() {}
