@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import org.springframework.security.access.AccessDeniedException;
@@ -38,11 +40,12 @@ public class EventService {
     private final KafkaSender kafkaSender;
     private final KafkaEventUpdatesCheck kafkaEventUpdatesCheck;
     private final CacheService cacheService;
-    private final RedisTemplate<String,EventEntity> redisTemplate;
     private static final String REDIS_PREFIX = "event:";
+    private static final String LOCK_PREFIX = "lock:event:update:";
+    private final StringRedisTemplate stringRedisTemplate;
 
 
-    public EventService(EventMapper eventMapper, LocationRepository locationRepository, EventRepository eventRepository, RegistrationRepository registrationRepository, KafkaSender kafkaSender, KafkaEventUpdatesCheck kafkaEventUpdatesCheck, CacheService cacheService, RedisTemplate<String, EventEntity> redisTemplate) {
+    public EventService(EventMapper eventMapper, LocationRepository locationRepository, EventRepository eventRepository, RegistrationRepository registrationRepository, KafkaSender kafkaSender, KafkaEventUpdatesCheck kafkaEventUpdatesCheck, CacheService cacheService, StringRedisTemplate stringRedisTemplate) {
         this.eventMapper = eventMapper;
         this.locationRepository = locationRepository;
         this.eventRepository=eventRepository;
@@ -50,7 +53,7 @@ public class EventService {
         this.kafkaSender = kafkaSender;
         this.kafkaEventUpdatesCheck = kafkaEventUpdatesCheck;
         this.cacheService = cacheService;
-        this.redisTemplate = redisTemplate;
+        this.stringRedisTemplate = stringRedisTemplate;
     }
 
 
@@ -136,53 +139,81 @@ public class EventService {
     @Transactional
     public Event updateEventById(Event eventToUpdate, Long id) {
 
-
-        EventEntity existingEvent = eventRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Not found event with id: %s".formatted(id)));
+        String lockedKey = REDIS_PREFIX + id;
+        String token = UUID.randomUUID().toString();
 
 
-        if (!SecurityUtils.getCurrentUserId().equals(existingEvent.getOwnerId())
-                && !SecurityUtils.getCurrentUser().getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("Access denied");
+        Boolean locked = stringRedisTemplate.opsForValue()
+                .setIfAbsent(lockedKey, token, Duration.ofSeconds(30));
+
+        if (Boolean.FALSE.equals(locked)) {
+            throw new AccessDeniedException("Event is being updated by another process");
         }
 
-        int registrationsCount = eventRepository.countRegistrationsByEventId(id);
+        Event updatedEvent;
 
-        if (registrationsCount > eventToUpdate.getMaxPlaces()) {
-            throw new IllegalArgumentException(
-                    String.format("Cannot reduce maxPlaces to %d because there are %d registrations already",
-                            eventToUpdate.getMaxPlaces(), registrationsCount)
-            );
+        try {
+            EventEntity existingEvent = eventRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Not found event with id: %s".formatted(id)));
+
+
+            if (!SecurityUtils.getCurrentUserId().equals(existingEvent.getOwnerId())
+                    && !SecurityUtils.getCurrentUser().getRole().equals(Role.ADMIN)) {
+                throw new AccessDeniedException("Access denied");
+            }
+
+            int registrationsCount = eventRepository.countRegistrationsByEventId(id);
+
+            if (registrationsCount > eventToUpdate.getMaxPlaces()) {
+                throw new IllegalArgumentException(
+                        String.format("Cannot reduce maxPlaces to %d because there are %d registrations already",
+                                eventToUpdate.getMaxPlaces(), registrationsCount)
+                );
+            }
+
+            LocationEntity location = locationRepository.findById(eventToUpdate.getLocationId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Not found location with id: %s".formatted(eventToUpdate.getLocationId())));
+
+            if (location.getCapacity() < eventToUpdate.getMaxPlaces()) {
+                throw new IllegalArgumentException(
+                        "The capacity of the location (%d) is less than the number of maxPlaces (%d)"
+                                .formatted(location.getCapacity(), eventToUpdate.getMaxPlaces()));
+            }
+
+            String key = REDIS_PREFIX + id;
+
+            Event oldEvent = eventMapper.toEventFromEntity(existingEvent);
+
+            existingEvent.setName(eventToUpdate.getName());
+            existingEvent.setStartAt(eventToUpdate.getStartAt());
+            existingEvent.setDurationMinutes(eventToUpdate.getDurationMinutes());
+            existingEvent.setMaxPlaces(eventToUpdate.getMaxPlaces());
+            existingEvent.setCost(eventToUpdate.getCost());
+            existingEvent.setLocationId(eventToUpdate.getLocationId());
+
+            EventEntity savedEntity = eventRepository.save(existingEvent);
+            updatedEvent = eventMapper.toEventFromEntity(savedEntity);
+
+
+            cacheService.writeEventToRedisIfPresent(key, savedEntity);
+            kafkaEventUpdatesCheck.publishEventUpdated(oldEvent, updatedEvent, SecurityUtils.getCurrentUserId());
+
+        }finally {
+            DefaultRedisScript<Long> unlockScript = new DefaultRedisScript<>();
+            unlockScript.setScriptText("""
+            if redis.call('get', KEYS[1]) == ARGV[1] then
+                return redis.call('del', KEYS[1])
+            end
+            return 0
+            """);
+            unlockScript.setResultType(Long.class);
+
+
+            stringRedisTemplate.execute(unlockScript, List.of(lockedKey), token);
         }
 
-        LocationEntity location = locationRepository.findById(eventToUpdate.getLocationId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Not found location with id: %s".formatted(eventToUpdate.getLocationId())));
-
-        if (location.getCapacity() < eventToUpdate.getMaxPlaces()) {
-            throw new IllegalArgumentException(
-                    "The capacity of the location (%d) is less than the number of maxPlaces (%d)"
-                            .formatted(location.getCapacity(), eventToUpdate.getMaxPlaces()));
-        }
-
-        String key= REDIS_PREFIX + id;
-
-        Event oldEvent = eventMapper.toEventFromEntity(existingEvent);
-
-        existingEvent.setName(eventToUpdate.getName());
-        existingEvent.setStartAt(eventToUpdate.getStartAt());
-        existingEvent.setDurationMinutes(eventToUpdate.getDurationMinutes());
-        existingEvent.setMaxPlaces(eventToUpdate.getMaxPlaces());
-        existingEvent.setCost(eventToUpdate.getCost());
-        existingEvent.setLocationId(eventToUpdate.getLocationId());
-
-        EventEntity savedEntity = eventRepository.save(existingEvent);
-        Event updatedEvent = eventMapper.toEventFromEntity(savedEntity);
-
-
-        cacheService.writeEventToRedisIfPresent(key, savedEntity);
-        kafkaEventUpdatesCheck.publishEventUpdated(oldEvent, updatedEvent, SecurityUtils.getCurrentUserId());
 
         return updatedEvent;
     }
