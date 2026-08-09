@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: event-manager
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -39,3 +45,4 @@ springdoc:
 jwt:
   secret: "74cf29aeb2a65032d8e3c252883040648054f42905d3f2ad80e9dfce24d36c1b"
   expiration: 86400000
+
