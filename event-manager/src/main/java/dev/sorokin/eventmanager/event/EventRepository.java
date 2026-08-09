@@ -12,6 +12,7 @@ import java.util.Optional;
 
 @Repository
 public interface EventRepository extends JpaRepository<EventEntity,Long> {
+
     Optional<EventEntity> findById(Long id);
 
     boolean existsByLocationId(Long id);

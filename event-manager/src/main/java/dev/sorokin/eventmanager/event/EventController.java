@@ -30,7 +30,6 @@ public class EventController {
         this.eventService = eventService;
     }
 
-
     @PostMapping
     public ResponseEntity<EventResponseDTO> createEvent(@RequestBody @Valid EventCreateRequestDTO eventCreateRequestDTO){
         Event eventToCreate = eventMapper.toEventFromDto(eventCreateRequestDTO);
@@ -91,6 +90,4 @@ public class EventController {
                 .map(event -> eventMapper.toResponseDtoFromEvent(event))
                 .toList());
     }
-
-
 }

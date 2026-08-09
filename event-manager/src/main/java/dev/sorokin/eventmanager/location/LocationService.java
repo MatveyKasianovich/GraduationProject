@@ -37,12 +37,11 @@ public class LocationService {
         this.cacheService = cacheService;
     }
 
-
     public List<Location> getAllLocations() {
 
         List<LocationEntity> locationEntities = cacheService.getAllLocationsFromCache();
 
-        if (locationEntities == null||locationEntities.isEmpty()) {
+        if (locationEntities.isEmpty()) {
             List<LocationEntity> entities = locationRepository.findAll();
             entities.stream().forEach(locationEntity -> {cacheService.writeLocationToRedis(REDIS_PREFIX+locationEntity.getId(), locationEntity);});
             return entities.stream()
