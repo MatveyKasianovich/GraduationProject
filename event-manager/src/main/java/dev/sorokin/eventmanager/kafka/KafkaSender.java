@@ -14,7 +14,6 @@ public class KafkaSender {
 
     private final KafkaTemplate<String, NotificationPayload> kafkaTemplate;
 
-
     public KafkaSender(KafkaTemplate<String, NotificationPayload> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }

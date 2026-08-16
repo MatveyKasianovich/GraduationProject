@@ -57,6 +57,8 @@ public class SecurityConfiguration {
                                 "/users",
                                 "/users/auth"
                         ).permitAll()
+                        .requestMatchers("/actuator/**"
+                        ).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/users/*"

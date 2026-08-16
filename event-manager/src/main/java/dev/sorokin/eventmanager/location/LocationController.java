@@ -24,7 +24,6 @@ public class LocationController {
         this.locationService = locationService;
     }
 
-
     @GetMapping
     public ResponseEntity<List<LocationDTO>> getAllLocations(){
         return ResponseEntity.status(HttpStatus.OK).body(
@@ -38,7 +37,6 @@ public class LocationController {
         Location locationToUpdate=mapper.toLocationFromDto(locationDTO);
         return ResponseEntity.status(HttpStatus.OK).body(mapper.toLocationDtoFromLocation(locationService.updateLocation(locationToUpdate,id)));
     }
-
 
     @GetMapping("/{id}")
     public ResponseEntity<LocationDTO> getLocationById(@PathVariable Long id){

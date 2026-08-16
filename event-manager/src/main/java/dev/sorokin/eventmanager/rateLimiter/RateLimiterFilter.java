@@ -29,7 +29,6 @@ public class RateLimiterFilter extends OncePerRequestFilter {
     private static final int DEFAULT_LIMIT = 10;
     private static final Duration DURATION_WINDOW = Duration.ofMinutes(1);
 
-
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -42,13 +41,11 @@ public class RateLimiterFilter extends OncePerRequestFilter {
                 .orElseGet(() -> Optional.ofNullable(request.getRemoteAddr())
                         .orElse("unknown"));
 
-
         boolean allowed = rateLimiterService.isAllowed(
                 client,
                 DEFAULT_LIMIT,
                 DURATION_WINDOW
         );
-
 
         if (!allowed) {
             log.warn("Rate limit exceeded for client: {}", client);

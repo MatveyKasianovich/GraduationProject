@@ -8,7 +8,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -87,10 +90,11 @@ public class CacheService {
 
     public List<LocationEntity> getAllLocationsFromCache() {
         try {
-            List<LocationEntity> entities = redisLocationTemplate.keys(REDIS_LOCATION_PREFIX + "*").stream()
+            return Optional.ofNullable(redisLocationTemplate.keys(REDIS_LOCATION_PREFIX + "*"))
+                    .orElse(Collections.emptySet())
+                    .stream()
                     .map(key -> redisLocationTemplate.opsForValue().get(key))
                     .toList();
-            return entities;
 
         } catch (RedisConnectionFailureException e) {
             log.error("Redis connection failure");

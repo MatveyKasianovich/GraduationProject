@@ -254,9 +254,4 @@ public class EventService {
                 .map(eventEntity -> eventMapper.toEventFromEntity(eventEntity))
                 .collect(Collectors.toList());
     }
-
-
-
-
-
 }
