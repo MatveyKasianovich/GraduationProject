@@ -36,21 +36,16 @@ public class EventService {
     private final EventMapper eventMapper;
     private final LocationRepository locationRepository;
     private final EventRepository eventRepository;
-    private final RegistrationRepository registrationRepository;
-    private final KafkaSender kafkaSender;
     private final KafkaEventUpdatesCheck kafkaEventUpdatesCheck;
     private final CacheService cacheService;
     private static final String REDIS_PREFIX = "event:";
-    private static final String LOCK_PREFIX = "lock:event:update:";
     private final StringRedisTemplate stringRedisTemplate;
 
 
-    public EventService(EventMapper eventMapper, LocationRepository locationRepository, EventRepository eventRepository, RegistrationRepository registrationRepository, KafkaSender kafkaSender, KafkaEventUpdatesCheck kafkaEventUpdatesCheck, CacheService cacheService, StringRedisTemplate stringRedisTemplate) {
+    public EventService(EventMapper eventMapper, LocationRepository locationRepository, EventRepository eventRepository, KafkaEventUpdatesCheck kafkaEventUpdatesCheck, CacheService cacheService, StringRedisTemplate stringRedisTemplate) {
         this.eventMapper = eventMapper;
         this.locationRepository = locationRepository;
         this.eventRepository=eventRepository;
-        this.registrationRepository = registrationRepository;
-        this.kafkaSender = kafkaSender;
         this.kafkaEventUpdatesCheck = kafkaEventUpdatesCheck;
         this.cacheService = cacheService;
         this.stringRedisTemplate = stringRedisTemplate;
@@ -61,7 +56,6 @@ public class EventService {
     public Event createEvent(Event eventToCreate) {
 
         Long currentUserId = SecurityUtils.getCurrentUserId();
-
         eventToCreate.setOwnerId(currentUserId);
 
         Long locationId = eventToCreate.getLocationId();
@@ -76,21 +70,20 @@ public class EventService {
         }
 
         EventEntity entity = eventMapper.toEntityFromEvent(eventToCreate);
-
         EventEntity savedEntity = eventRepository.save(entity);
+        Event createdEvent = eventMapper.toEventFromEntity(savedEntity);
 
-        return eventMapper.toEventFromEntity(savedEntity);
+        String key = REDIS_PREFIX + savedEntity.getId();
+        cacheService.writeEventToRedis(key, createdEvent);
+
+        return createdEvent;
     }
 
     @Transactional
     public void deleteEventById(Long id) throws AccessDeniedException {
-
-
         EventEntity eventEntity = eventRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Not found event with id: %s".formatted(id)));
-
-
 
         if (!SecurityUtils.getCurrentUserId().equals(eventEntity.getOwnerId()) &&
                 !SecurityUtils.getCurrentUser().getRole().equals(Role.ADMIN)) {
@@ -104,14 +97,17 @@ public class EventService {
         String key = REDIS_PREFIX + id;
 
         Event oldEventDto = eventMapper.toEventFromEntity(eventEntity);
+
         eventEntity.setStatus(EventStatus.CANCELLED.name());
         eventRepository.save(eventEntity);
 
-        cacheService.writeEventToRedisIfPresent(key,eventEntity);
+        Event updatedEvent = eventMapper.toEventFromEntity(eventEntity);
+
+        cacheService.writeEventToRedisIfPresent(key, updatedEvent);
 
         kafkaEventUpdatesCheck.publishEventUpdated(
                 oldEventDto,
-                eventMapper.toEventFromEntity(eventEntity),
+                updatedEvent,
                 SecurityUtils.getCurrentUserId()
         );
     }
@@ -119,21 +115,23 @@ public class EventService {
     @Transactional
     public Event getEventById(Long id) {
 
-        String key= REDIS_PREFIX + id;
+        String key = REDIS_PREFIX + id;
 
-        EventEntity eventFromCache=cacheService.readEventFromRedis(key);
-        if (eventFromCache!=null) {
+        Event eventFromCache = cacheService.readEventFromRedis(key);
+        if (eventFromCache != null) {
             log.info("Get from Redis event successfully");
-            return eventMapper.toEventFromEntity(eventFromCache);
+            return eventFromCache;
         }
 
-        EventEntity foundEvent=eventRepository.findById(id)
-                .orElseThrow(()->new EntityNotFoundException(
+        EventEntity foundEvent = eventRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
                         "Not found event with id: %s".formatted(id)));
 
-        cacheService.writeEventToRedis(key, foundEvent);
+        Event event = eventMapper.toEventFromEntity(foundEvent);
 
-        return eventMapper.toEventFromEntity(foundEvent);
+        cacheService.writeEventToRedis(key, event);
+
+        return event;
     }
 
     @Transactional
@@ -141,7 +139,6 @@ public class EventService {
 
         String lockedKey = REDIS_PREFIX + id;
         String token = UUID.randomUUID().toString();
-
 
         Boolean locked = stringRedisTemplate.opsForValue()
                 .setIfAbsent(lockedKey, token, Duration.ofSeconds(30));
@@ -156,7 +153,6 @@ public class EventService {
             EventEntity existingEvent = eventRepository.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException(
                             "Not found event with id: %s".formatted(id)));
-
 
             if (!SecurityUtils.getCurrentUserId().equals(existingEvent.getOwnerId())
                     && !SecurityUtils.getCurrentUser().getRole().equals(Role.ADMIN)) {
@@ -196,24 +192,23 @@ public class EventService {
             EventEntity savedEntity = eventRepository.save(existingEvent);
             updatedEvent = eventMapper.toEventFromEntity(savedEntity);
 
+            cacheService.writeEventToRedisIfPresent(key, updatedEvent);
 
-            cacheService.writeEventToRedisIfPresent(key, savedEntity);
             kafkaEventUpdatesCheck.publishEventUpdated(oldEvent, updatedEvent, SecurityUtils.getCurrentUserId());
 
-        }finally {
+        } finally {
+
             DefaultRedisScript<Long> unlockScript = new DefaultRedisScript<>();
             unlockScript.setScriptText("""
-            if redis.call('get', KEYS[1]) == ARGV[1] then
-                return redis.call('del', KEYS[1])
-            end
-            return 0
-            """);
+                if redis.call('get', KEYS[1]) == ARGV[1] then
+                    return redis.call('del', KEYS[1])
+                end
+                return 0
+                """);
             unlockScript.setResultType(Long.class);
-
 
             stringRedisTemplate.execute(unlockScript, List.of(lockedKey), token);
         }
-
 
         return updatedEvent;
     }

@@ -16,6 +16,9 @@ public class Location {
         this.description = description;
     }
 
+    public Location() {
+    }
+
     public Long getId() {
         return id;
     }

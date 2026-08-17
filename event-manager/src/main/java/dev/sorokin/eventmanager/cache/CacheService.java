@@ -1,7 +1,7 @@
 package dev.sorokin.eventmanager.cache;
 
-import dev.sorokin.eventmanager.event.EventEntity;
-import dev.sorokin.eventmanager.location.LocationEntity;
+import dev.sorokin.eventmanager.event.Event;
+import dev.sorokin.eventmanager.location.Location;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -17,17 +17,18 @@ import java.util.Optional;
 @Service
 public class CacheService {
 
-    private final RedisTemplate<String,EventEntity> redisEventTemplate;
-    private final RedisTemplate<String,LocationEntity> redisLocationTemplate;
+    private final RedisTemplate<String,Event> redisEventTemplate;
+    private final RedisTemplate<String,Location> redisLocationTemplate;
     private static final String REDIS_LOCATION_PREFIX = "location:";
+    private static final Duration REDIS_LOCATION_EXPIRATION = Duration.ofMinutes(1);
 
 
-    public CacheService(RedisTemplate<String, EventEntity> redisEventTemplate, RedisTemplate<String, LocationEntity> redisLocationTemplate) {
+    public CacheService(RedisTemplate<String, Event> redisEventTemplate, RedisTemplate<String, Location> redisLocationTemplate) {
         this.redisEventTemplate = redisEventTemplate;
         this.redisLocationTemplate = redisLocationTemplate;
     }
 
-    public EventEntity readEventFromRedis(String key){
+    public Event readEventFromRedis(String key){
         try {
             return  redisEventTemplate.opsForValue().get(key);
         }catch (RedisConnectionFailureException e){
@@ -36,24 +37,24 @@ public class CacheService {
         }
     }
 
-    public void writeEventToRedis(String key,EventEntity eventEntity){
+    public void writeEventToRedis(String key,Event event){
         try {
-            redisEventTemplate.opsForValue().set(key,eventEntity, Duration.ofMinutes(1));
+            redisEventTemplate.opsForValue().set(key,event, REDIS_LOCATION_EXPIRATION);
             log.info("Redis set event successfully");
         }catch (RedisConnectionFailureException e){
             log.error("Redis connection failure");
         }
     }
 
-    public void writeEventToRedisIfPresent(String key,EventEntity eventEntity){
+    public void writeEventToRedisIfPresent(String key,Event event){
         try {
-            redisEventTemplate.opsForValue().setIfPresent(key,eventEntity, Duration.ofMinutes(1));
+            redisEventTemplate.opsForValue().setIfPresent(key,event, REDIS_LOCATION_EXPIRATION);
         }catch (RedisConnectionFailureException e){
             log.error("Redis connection failure");
         }
     }
 
-    public LocationEntity readLocationFromRedis(String key){
+    public Location readLocationFromRedis(String key){
         try {
             return  redisLocationTemplate.opsForValue().get(key);
         }catch (RedisConnectionFailureException e){
@@ -62,18 +63,18 @@ public class CacheService {
         }
     }
 
-    public void writeLocationToRedis(String key,LocationEntity locationEntity){
+    public void writeLocationToRedis(String key,Location location){
         try {
-            redisLocationTemplate.opsForValue().set(key,locationEntity,Duration.ofMinutes(1));
+            redisLocationTemplate.opsForValue().set(key,location,REDIS_LOCATION_EXPIRATION);
             log.info("Redis set location successfully");
         }catch (RedisConnectionFailureException e){
             log.error("Redis connection failure");
         }
     }
 
-    public void writeLocationToRedisIfPresent(String key,LocationEntity locationEntity){
+    public void writeLocationToRedisIfPresent(String key,Location location){
         try {
-            redisLocationTemplate.opsForValue().set(key,locationEntity,Duration.ofMinutes(1));
+            redisLocationTemplate.opsForValue().set(key,location,REDIS_LOCATION_EXPIRATION);
             log.info("Redis set successfully");
         }catch (RedisConnectionFailureException e){
             log.error("Redis connection failure");
@@ -88,7 +89,7 @@ public class CacheService {
         }
     }
 
-    public List<LocationEntity> getAllLocationsFromCache() {
+    public List<Location> getAllLocationsFromCache() {
         try {
             return Optional.ofNullable(redisLocationTemplate.keys(REDIS_LOCATION_PREFIX + "*"))
                     .orElse(Collections.emptySet())

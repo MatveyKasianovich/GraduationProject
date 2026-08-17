@@ -3,6 +3,7 @@ package dev.sorokin.eventnotificator.dto;
 import java.util.List;
 
 public class MarkNotificationAsReadToBusinnes {
+
     private List<Long> notificationIds;
 
     public MarkNotificationAsReadToBusinnes(List<Long> notificationIds) {

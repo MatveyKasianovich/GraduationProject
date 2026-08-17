@@ -35,6 +35,7 @@ public class CacheService {
     }
 
     public void decrementCacheValue(String userId,Long amountOfUnreadNotifications){
+
         String key = REDIS_PREFIX + userId;
         try {
             stringRedisTemplate.opsForValue().set(key,amountOfUnreadNotifications.toString(),duration);

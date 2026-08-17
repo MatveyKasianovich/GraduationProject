@@ -1,11 +1,9 @@
 package dev.sorokin.eventmanager.location;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @jakarta.persistence.Entity
 @Table(name = "locations")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class LocationEntity {
 
     @Id

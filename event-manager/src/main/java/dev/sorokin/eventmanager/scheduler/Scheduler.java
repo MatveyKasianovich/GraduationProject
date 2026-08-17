@@ -6,7 +6,6 @@ import dev.sorokin.eventmanager.cache.CacheService;
 import dev.sorokin.eventmanager.event.Event;
 import dev.sorokin.eventmanager.event.EventEntity;
 import dev.sorokin.eventmanager.event.EventRepository;
-import dev.sorokin.eventmanager.event.EventStatus;
 import dev.sorokin.eventmanager.kafka.KafkaSender;
 import dev.sorokin.eventmanager.mapper.EventMapper;
 import dev.sorokin.eventmanager.registration.RegistrationRepository;
@@ -17,7 +16,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -67,15 +65,17 @@ public class Scheduler {
                 now
         );
         if (!eventsToStart.isEmpty()) {
-            for (EventEntity event : eventsToStart) {
+            for (EventEntity eventEntity : eventsToStart) {
 
-                Event oldEventDto = eventMapper.toEventFromEntity(event);
+                Event oldEventDto = eventMapper.toEventFromEntity(eventEntity);
                 EventEntity oldEvent = eventMapper.toEntityFromEvent(oldEventDto);
-                event.setStatus(STARTED.name());
+                eventEntity.setStatus(STARTED.name());
 
-                cacheService.writeEventToRedisIfPresent(REDIS_PREFIX + event.getId(),event);
 
-                publishNotificationToKafka(oldEvent, event);
+                Event event = eventMapper.toEventFromEntity(eventEntity);
+                cacheService.writeEventToRedisIfPresent(REDIS_PREFIX + eventEntity.getId(),event);
+
+                publishNotificationToKafka(oldEvent, eventEntity);
             }
 
             eventRepository.saveAll(eventsToStart);
@@ -91,16 +91,17 @@ public class Scheduler {
         List<EventEntity> eventsToFinish = eventRepository.findAllByStatus(STARTED.name());
 
         if (!eventsToFinish.isEmpty()) {
-            for (EventEntity event : eventsToFinish) {
-                LocalDateTime endTime = event.getStartAt().plusMinutes(event.getDurationMinutes());
+            for (EventEntity eventEntity : eventsToFinish) {
+                LocalDateTime endTime = eventEntity.getStartAt().plusMinutes(eventEntity.getDurationMinutes());
                 if (endTime.isBefore(now) || endTime.isEqual(now)) {
-                    Event oldEventDto = eventMapper.toEventFromEntity(event);
+                    Event oldEventDto = eventMapper.toEventFromEntity(eventEntity);
                     EventEntity oldEvent = eventMapper.toEntityFromEvent(oldEventDto);
-                    event.setStatus(FINISHED.name());
+                    eventEntity.setStatus(FINISHED.name());
 
+                    Event event = eventMapper.toEventFromEntity(eventEntity);
                     cacheService.writeEventToRedisIfPresent(REDIS_PREFIX+event.getId(),event);
 
-                    publishNotificationToKafka(oldEvent,event);
+                    publishNotificationToKafka(oldEvent,eventEntity);
                 }
             }
             eventRepository.saveAll(eventsToFinish);
@@ -109,6 +110,7 @@ public class Scheduler {
     }
 
     private void publishNotificationToKafka(EventEntity oldEvent, EventEntity newEvent) {
+
         String messageId = UUID.randomUUID().toString();
 
         List<NotificationChange> changes = List.of(

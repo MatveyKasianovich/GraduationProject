@@ -29,7 +29,6 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     """)
     void markNotificationsAsRead(@Param("userId") Long userId, @Param("ids") List<Long> ids);
 
-
     @Query("SELECT COUNT(n) FROM NotificationEntity n " +
             "WHERE n.isRead = false AND n.userId = :userId")
     Long countUnreadByUserId(@Param("userId") Long userId);

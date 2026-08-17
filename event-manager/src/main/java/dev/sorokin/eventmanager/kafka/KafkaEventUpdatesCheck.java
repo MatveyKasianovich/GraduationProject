@@ -28,7 +28,6 @@ public class KafkaEventUpdatesCheck {
     public void publishEventUpdated(Event oldEvent, Event newEvent, Long changedById) {
 
         List<NotificationChange> changes = detectChanges(oldEvent, newEvent);
-
         if (changes.isEmpty()) {
             return;
         }

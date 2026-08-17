@@ -27,7 +27,6 @@ public class NotificationService {
         return notificationRepository.findAllUnreadByUserId(SecurityUtils.getCurrentUserId()).stream()
                 .map(notificationEntity -> notificationMapper.toDomain(notificationEntity))
                 .toList();
-
     }
 
     @Transactional

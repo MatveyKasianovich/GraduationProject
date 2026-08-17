@@ -8,15 +8,9 @@ import dev.sorokin.eventmanager.mapper.LocationMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.RedisConnectionFailureException;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -39,47 +33,44 @@ public class LocationService {
 
     public List<Location> getAllLocations() {
 
-        List<LocationEntity> locationEntities = cacheService.getAllLocationsFromCache();
+        List<Location> cachedLocations = cacheService.getAllLocationsFromCache();
 
-        if (locationEntities.isEmpty()) {
+        if (cachedLocations.isEmpty()) {
             List<LocationEntity> entities = locationRepository.findAll();
-            entities.stream().forEach(locationEntity -> {cacheService.writeLocationToRedis(REDIS_PREFIX+locationEntity.getId(), locationEntity);});
-            return entities.stream()
+            List<Location> locations = entities.stream()
                     .map(mapper::toLocationFromEntity)
                     .collect(Collectors.toList());
+            locations.forEach(location -> cacheService.writeLocationToRedis(REDIS_PREFIX + location.getId(), location));
+            return locations;
         }
         else {
             log.info("Got from Redis");
-            return  locationEntities.stream()
-                .map(entity->mapper.toLocationFromEntity(entity))
-                .collect(Collectors.toList());
+            return cachedLocations;
         }
     }
 
     public Location getLocationById(Long id) {
 
-        String key = REDIS_PREFIX + id;
-
         if(!locationRepository.existsById(id)){
             throw new EntityNotFoundException("No entity with id=%s".formatted(id));
         }
 
-        LocationEntity locationEntityFromCache=cacheService.readLocationFromRedis(key);
-        if(locationEntityFromCache!=null){
-            return mapper.toLocationFromEntity(locationEntityFromCache);
+        String key = REDIS_PREFIX + id;
+        Location locationFromCache = cacheService.readLocationFromRedis(key);
+        if(locationFromCache != null){
+            return locationFromCache;
         }
 
-        LocationEntity locationEntityFromDB=locationRepository.getReferenceById(id);
+        LocationEntity locationEntityFromDB = locationRepository.getReferenceById(id);
+        Location locationFromDB = mapper.toLocationFromEntity(locationEntityFromDB);
 
-        cacheService.writeLocationToRedis(key,locationEntityFromDB);
+        cacheService.writeLocationToRedis(key, locationFromDB);
 
-        return mapper.toLocationFromEntity(locationEntityFromDB);
+        return locationFromDB;
     }
 
     @Transactional
     public Location updateLocation(Location locationToUpdate, Long id) {
-
-        String key = REDIS_PREFIX + id;
 
         if (!locationRepository.existsById(id)) {
             throw new EntityNotFoundException("No entity with id=%s".formatted(id));
@@ -98,25 +89,29 @@ public class LocationService {
                 locationToUpdate.getDescription()
         );
 
-        cacheService.writeLocationToRedisIfPresent(key, updatedEntity);
+        Location savedLocation = mapper.toLocationFromEntity(locationRepository.save(updatedEntity));
 
-        return mapper.toLocationFromEntity(locationRepository.save(updatedEntity));
+        String key = REDIS_PREFIX + id;
+        cacheService.writeLocationToRedisIfPresent(key, savedLocation);
+
+        return savedLocation;
     }
 
     @Transactional
     public Location createLocation(Location location) {
-        String key = REDIS_PREFIX + location.getId();
 
-        LocationEntity locationEntity = locationRepository.save(mapper.toEntityFromLocation(location));
-        cacheService.writeLocationToRedis(key, locationEntity);
+        LocationEntity savedEntity = locationRepository.save(mapper.toEntityFromLocation(location));
+        Location savedLocation = mapper.toLocationFromEntity(savedEntity);
 
-        return mapper.toLocationFromEntity(locationEntity);
+        String key = REDIS_PREFIX + savedLocation.getId();
+        cacheService.writeLocationToRedis(key, savedLocation);
+
+        return savedLocation;
     }
 
 
     @Transactional
     public void deleteLocationById(Long id) {
-        String key = REDIS_PREFIX + id;
 
         if(!locationRepository.existsById(id)){
             throw new EntityNotFoundException("No entity with id=%s".formatted(id));
@@ -125,9 +120,9 @@ public class LocationService {
         if(eventRepository.existsByLocationId(id)){
             throw new IllegalArgumentException("Location to delete has events");
         }
+
         locationRepository.deleteLocationEntitiesById(id);
+        String key = REDIS_PREFIX + id;
         cacheService.deleteLocationFromRedis(key);
     }
-
-
 }
