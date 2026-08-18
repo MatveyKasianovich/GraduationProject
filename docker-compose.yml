@@ -1,50 +1,176 @@
-version: '3.7'
+version: '3.9'
 
 networks:
-  monitoring-net:
+  app-net:
     driver: bridge
 
+volumes:
+  event_manager_pg_data:
+  event_notificator_pg_data:
+  event_manager_redis_data:
+  grafana_data:
+
 services:
+
+  # ---------- Базы данных ----------
+
+  postgres-event-manager:
+    image: postgres:16
+    container_name: event-manager-postgres
+    environment:
+      POSTGRES_DB: event_manager
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5438:5432"
+    volumes:
+      - event_manager_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_manager"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-net
+
+  postgres-event-notificator:
+    image: postgres:16
+    container_name: event-notificator-postgres
+    environment:
+      POSTGRES_DB: event_notificator
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5439:5432"
+    volumes:
+      - event_notificator_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_notificator"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-net
+
+  # ---------- Kafka ----------
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
+    container_name: event-manager-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
     networks:
-      - monitoring-net
+      - app-net
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
+    container_name: event-manager-kafka
     depends_on:
       - zookeeper
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      # PLAINTEXT - для доступа с хоста, PLAINTEXT_INTERNAL - для доступа из других контейнеров сети
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     ports:
       - "9092:9092"
     networks:
-      - monitoring-net
+      - app-net
+
+  # ---------- Redis ----------
+
+  redis:
+    image: redis:7
+    container_name: event-manager-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - event_manager_redis_data:/data
+    networks:
+      - app-net
+
+  # ---------- Сервисы приложения ----------
+
+  event-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile.event-manager
+    container_name: event-manager
+    depends_on:
+      postgres-event-manager:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      redis:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-event-manager:5432/event_manager
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8089:8089"
+    networks:
+      - app-net
+
+  event-notificator:
+    build:
+      context: .
+      dockerfile: Dockerfile.event-notificator
+    container_name: event-notificator
+    depends_on:
+      postgres-event-notificator:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      redis:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-event-notificator:5432/event_notificator
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8090:8090"
+    networks:
+      - app-net
+
+  # ---------- Мониторинг ----------
+
   prometheus:
-      image: prom/prometheus
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
-      volumes:
-        - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      ports:
-        - "9090:9090"
-      networks:
-        - monitoring-net
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - event-manager
+    networks:
+      - app-net
 
   grafana:
-      image: grafana/grafana
-      environment:
-        - GF_SECURITY_ADMIN_PASSWORD=admin
-      ports:
-        - "3000:3000"
-      depends_on:
-        - prometheus
-      networks:
-        - monitoring-net
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - app-net

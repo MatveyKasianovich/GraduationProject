@@ -31,7 +31,7 @@ public class UserController {
     }
 
     @PostMapping()
-    public ResponseEntity<UserDTO> registerUser(@RequestBody SignUpRequest signUpRequest){
+    public ResponseEntity<UserDTO> registerUser(@RequestBody @Valid SignUpRequest signUpRequest){
         log.info("Get request for sign-u,login=%s".formatted(signUpRequest.login()));
         User user=userService.registerUser(signUpRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(userMapper.toUserDtoFromUser(user));

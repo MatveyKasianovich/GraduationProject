@@ -1,0 +1,6 @@
+**/target/
+.idea/
+.junie/
+.git/
+*.md
+docs/

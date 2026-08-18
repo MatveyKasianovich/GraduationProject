@@ -1,0 +1,12 @@
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+WORKDIR /app
+
+COPY . .
+RUN mvn -q -pl event-manager -am package -DskipTests
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/event-manager/target/*.jar app.jar
+
+EXPOSE 8089
+ENTRYPOINT ["java", "-jar", "app.jar"]
