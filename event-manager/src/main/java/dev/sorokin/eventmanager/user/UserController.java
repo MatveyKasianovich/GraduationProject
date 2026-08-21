@@ -39,7 +39,6 @@ public class UserController {
 
     @PostMapping("/auth")
     public ResponseEntity<JwtTokenResponse>autheticate(@RequestBody @Valid SignInRequest signInRequest){
-
         log.info("Get request for sign-in, login:{}",signInRequest.login());
         String token =jwtAuthenticationService.authenticateUser(signInRequest);
         return ResponseEntity.status(HttpStatus.OK).body(new JwtTokenResponse(token));
@@ -47,7 +46,6 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getuserById(@PathVariable Long id){
-
         log.info("Get request for getUserById, id:{}",id);
         return ResponseEntity.status(HttpStatus.OK).body(userMapper.toUserDtoFromUser(userService.getUserById(id)));
 
