@@ -43,7 +43,6 @@ public class EventEntity {
     private Long ownerId;
 
     @OneToMany(mappedBy = "event")
-    @JsonIgnore
     private List<RegistrationEntity> registrations = new ArrayList<>();
 
     public EventEntity() {}

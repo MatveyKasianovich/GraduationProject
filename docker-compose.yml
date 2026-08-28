@@ -12,8 +12,6 @@ volumes:
 
 services:
 
-  # ---------- Базы данных ----------
-
   postgres-event-manager:
     image: postgres:16
     container_name: event-manager-postgres
@@ -52,8 +50,6 @@ services:
     networks:
       - app-net
 
-  # ---------- Kafka ----------
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: event-manager-zookeeper
@@ -73,19 +69,16 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # PLAINTEXT - для доступа с хоста, PLAINTEXT_INTERNAL - для доступа из других контейнеров сети
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT # два листенера с протоколом Plaintext
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092 #где кафка открывает порты (для контейнеров в сети 29092, а для localhost 9092)
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092 # если localhost, то на 9092, а если в сети докера, то на 29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL #"если тебе, брокер, нужно поговорить с другим брокером — используй вот этот листенер"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 # один брокер в кластере, поэтому реплицируем offset на одном
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true" # если топика не существует, он автоматом создается
     ports:
       - "9092:9092"
     networks:
       - app-net
-
-  # ---------- Redis ----------
 
   redis:
     image: redis:7
@@ -96,8 +89,6 @@ services:
       - event_manager_redis_data:/data
     networks:
       - app-net
-
-  # ---------- Сервисы приложения ----------
 
   event-manager:
     build:
@@ -146,8 +137,6 @@ services:
       - "8090:8090"
     networks:
       - app-net
-
-  # ---------- Мониторинг ----------
 
   prometheus:
     image: prom/prometheus

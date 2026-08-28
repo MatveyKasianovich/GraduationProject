@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -87,12 +88,27 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ErrorMessageResponse> handleError(IOException e){
         ErrorMessageResponse errorDto=new  ErrorMessageResponse(
-                "Internal exception",
+                "внутренняя ошибка сервера",
                 e.getMessage(),
                 LocalDateTime.now()
         );
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorDto);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorMessageResponse> handleNotValidArgument(HttpMessageNotReadableException e) {
+        log.error("Got HttpMessageNotReadableException", e);
+
+        ErrorMessageResponse errorDto =  new ErrorMessageResponse(
+                "введены неверные данные в тело запроса",
+                e.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
                 .body(errorDto);
     }
 }
