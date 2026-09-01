@@ -22,8 +22,9 @@ public class UserService {
 
 
     public User registerUser(SignUpRequest signUpRequest){
+
         if(userRepository.existsUserEntityByLogin(signUpRequest.login())){
-            throw new IllegalArgumentException("User with login=%s already esists".formatted(signUpRequest.login()));
+            throw new IllegalArgumentException("User with login=%s already exists".formatted(signUpRequest.login()));
         }
 
        String hashPass=passwordEncoder.encode(signUpRequest.password());
@@ -32,7 +33,9 @@ public class UserService {
                 hashPass,
                 signUpRequest.age(),
                 Role.USER.name());
+
         userRepository.save(userToSave);
+
         return new User(
                 userToSave.getId(),
                 userToSave.getLogin(),

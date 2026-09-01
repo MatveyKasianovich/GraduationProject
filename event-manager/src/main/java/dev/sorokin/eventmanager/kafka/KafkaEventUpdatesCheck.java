@@ -73,7 +73,7 @@ public class KafkaEventUpdatesCheck {
             changes.add(new NotificationChange(UpdatedFields.EVENT_NAME.name(), oldEvent.getName(), newEvent.getName()));
         }
         if (!Objects.equals(oldEvent.getStartAt(), newEvent.getStartAt())) {
-            changes.add(new NotificationChange(UpdatedFields.EVENT_NAME.name(), oldEvent.getStartAt(), newEvent.getStartAt()));
+            changes.add(new NotificationChange(UpdatedFields.EVENT_START_AT.name(), oldEvent.getStartAt(), newEvent.getStartAt()));
         }
         if (!Objects.equals(oldEvent.getDurationMinutes(), newEvent.getDurationMinutes())) {
             changes.add(new NotificationChange(UpdatedFields.EVENT_DURATION_MINUTES.name(), oldEvent.getDurationMinutes(), newEvent.getDurationMinutes()));

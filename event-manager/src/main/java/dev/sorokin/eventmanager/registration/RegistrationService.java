@@ -46,7 +46,6 @@ public class RegistrationService {
             throw new IllegalArgumentException("Event has already started or cancelled");
         }
 
-
         Long currentUserId=SecurityUtils.getCurrentUserId();
         Optional<RegistrationEntity> registration = registrationRepository.findCurrentUserRegistrationOnEvent(currentUserId,eventId);
         if(registration.isPresent()){
@@ -59,10 +58,6 @@ public class RegistrationService {
                     LocalDateTime.now()
             ));
         }
-
-
-
-
     }
 
     @Transactional
@@ -100,7 +95,5 @@ public class RegistrationService {
                     .map(eventEntity -> eventMapper.toEventFromEntity(eventEntity))
                     .toList();
         }
-
-
     }
 }

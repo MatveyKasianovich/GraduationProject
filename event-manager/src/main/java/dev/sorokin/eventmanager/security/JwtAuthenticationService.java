@@ -34,7 +34,6 @@ public class JwtAuthenticationService {
         UserEntity user = userRepository.findByLogin(signInRequest.login())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-
         return jwtTokenManager.generateToken(
                 user.getId(),
                 user.getLogin(),
